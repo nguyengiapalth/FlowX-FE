@@ -3,7 +3,6 @@ import { useTaskStore } from '../../stores/task-store.ts';
 import { useProfileStore } from '../../stores/profile-store.ts';
 import { UserAvatar } from '../shared/UserAvatar';
 import { UserNameCard } from '../shared/UserNameCard';
-import taskService from '../../services/task.service.ts';
 import TaskFileUpload from './TaskFileUpload.tsx';
 import type { TaskResponse, TaskUpdateRequest } from '../../types/task.ts';
 import type { TaskStatus, PriorityLevel } from '../../types/enums.ts';

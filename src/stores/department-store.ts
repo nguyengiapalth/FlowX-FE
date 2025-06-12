@@ -30,7 +30,7 @@ interface DepartmentState {
 
 export const useDepartmentStore = create<DepartmentState>()(
     persist(
-        (set, get) => ({
+        (set) => ({
             // Initial state
             departments: [],
             isLoading: false,

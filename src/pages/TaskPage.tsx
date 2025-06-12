@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigationActions } from '../utils/navigation.utils';
-import { useAuthStore } from '../stores/auth-store';
 import { useProfileStore } from '../stores/profile-store';
 import { useTaskStore } from '../stores/task-store';
 import { UserAvatarName } from '../components/shared/UserAvatarName';
@@ -18,11 +17,9 @@ const TaskPage: React.FC = () => {
     myAssignedTasks, 
     myCreatedTasks, 
     isLoading,
-    error,
     fetchAllTasks,
     fetchMyAssignedTasks,
     fetchMyCreatedTasks,
-    createTask,
     updateTaskInList,
     removeTask
   } = useTaskStore();

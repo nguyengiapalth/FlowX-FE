@@ -32,7 +32,6 @@ export const ContentModal: React.FC<ContentModalProps> = ({
     isLoading,
     error,
     refreshContent,
-    updateContent,
     deleteContent
   } = useContentById(contentId);
 

@@ -1,112 +1,112 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-        <!-- Gradient chính -->
-        <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
-            <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#EC4899;stop-opacity:1" />
-        </linearGradient>
-
-        <!-- Gradient cho F -->
-        <linearGradient id="fGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
-        </linearGradient>
-
-        <!-- Gradient cho X -->
-        <linearGradient id="xGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#EC4899;stop-opacity:1" />
-        </linearGradient>
-
-        <!-- Gradient cho hiệu ứng flow -->
-        <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.6" />
-            <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:0.4" />
-            <stop offset="100%" style="stop-color:#EC4899;stop-opacity:0.6" />
-        </linearGradient>
-
-        <!-- Shadow filter -->
-        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.1"/>
-        </filter>
-    </defs>
-
-    <!-- Background circle -->
-    <circle cx="100" cy="100" r="85" fill="url(#mainGradient)" filter="url(#shadow)" opacity="0.08"/>
-
-    <!-- Flow curves connecting F and X -->
-    <path d="M75 85 Q100 70 125 85" stroke="url(#flowGradient)" stroke-width="3" fill="none" opacity="0.6">
-        <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite"/>
+  <defs>
+    <!-- Gradient chính -->
+    <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EC4899;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradient cho F -->
+    <linearGradient id="fGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradient cho X -->
+    <linearGradient id="xGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EC4899;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradient cho hiệu ứng flow -->
+    <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.6" />
+      <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#EC4899;stop-opacity:0.6" />
+    </linearGradient>
+    
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="85" fill="url(#mainGradient)" filter="url(#shadow)" opacity="0.08"/>
+  
+  <!-- Flow curves connecting F and X -->
+  <path d="M75 85 Q100 70 125 85" stroke="url(#flowGradient)" stroke-width="3" fill="none" opacity="0.6">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite"/>
+  </path>
+  
+  <path d="M75 100 Q100 115 125 100" stroke="url(#flowGradient)" stroke-width="2" fill="none" opacity="0.4">
+    <animate attributeName="opacity" values="0.8;0.3;0.8" dur="3s" begin="1s" repeatCount="indefinite"/>
+  </path>
+  
+  <path d="M75 115 Q100 130 125 115" stroke="url(#flowGradient)" stroke-width="2" fill="none" opacity="0.5">
+    <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" begin="2s" repeatCount="indefinite"/>
+  </path>
+  
+  <!-- Letter F -->
+  <g transform="translate(55, 85)">
+    <!-- Vertical line of F -->
+    <rect x="0" y="0" width="6" height="35" fill="url(#fGradient)" rx="3">
+      <animate attributeName="height" values="33;37;33" dur="2s" repeatCount="indefinite"/>
+    </rect>
+    
+    <!-- Top horizontal line of F -->
+    <rect x="0" y="0" width="20" height="6" fill="url(#fGradient)" rx="3">
+      <animate attributeName="width" values="18;22;18" dur="2s" repeatCount="indefinite"/>
+    </rect>
+    
+    <!-- Middle horizontal line of F -->
+    <rect x="0" y="14" width="15" height="5" fill="url(#fGradient)" rx="2.5">
+      <animate attributeName="width" values="13;17;13" dur="2s" begin="1s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+  
+  <!-- Letter X -->
+  <g transform="translate(145, 100)">
+    <!-- Left diagonal of X -->
+    <path d="M-15 -15 L15 15" stroke="url(#xGradient)" stroke-width="6" stroke-linecap="round" fill="none">
+      <animate attributeName="stroke-width" values="5;7;5" dur="2s" repeatCount="indefinite"/>
     </path>
-
-    <path d="M75 100 Q100 115 125 100" stroke="url(#flowGradient)" stroke-width="2" fill="none" opacity="0.4">
-        <animate attributeName="opacity" values="0.8;0.3;0.8" dur="3s" begin="1s" repeatCount="indefinite"/>
+    
+    <!-- Right diagonal of X -->
+    <path d="M15 -15 L-15 15" stroke="url(#xGradient)" stroke-width="6" stroke-linecap="round" fill="none">
+      <animate attributeName="stroke-width" values="7;5;7" dur="2s" repeatCount="indefinite"/>
     </path>
-
-    <path d="M75 115 Q100 130 125 115" stroke="url(#flowGradient)" stroke-width="2" fill="none" opacity="0.5">
-        <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" begin="2s" repeatCount="indefinite"/>
-    </path>
-
-    <!-- Letter F -->
-    <g transform="translate(55, 85)">
-        <!-- Vertical line of F -->
-        <rect x="0" y="0" width="6" height="35" fill="url(#fGradient)" rx="3">
-            <animate attributeName="height" values="33;37;33" dur="2s" repeatCount="indefinite"/>
-        </rect>
-
-        <!-- Top horizontal line of F -->
-        <rect x="0" y="0" width="20" height="6" fill="url(#fGradient)" rx="3">
-            <animate attributeName="width" values="18;22;18" dur="2s" repeatCount="indefinite"/>
-        </rect>
-
-        <!-- Middle horizontal line of F -->
-        <rect x="0" y="14" width="15" height="5" fill="url(#fGradient)" rx="2.5">
-            <animate attributeName="width" values="13;17;13" dur="2s" begin="1s" repeatCount="indefinite"/>
-        </rect>
-    </g>
-
-    <!-- Letter X -->
-    <g transform="translate(145, 100)">
-        <!-- Left diagonal of X -->
-        <path d="M-15 -15 L15 15" stroke="url(#xGradient)" stroke-width="6" stroke-linecap="round" fill="none">
-            <animate attributeName="stroke-width" values="5;7;5" dur="2s" repeatCount="indefinite"/>
-        </path>
-
-        <!-- Right diagonal of X -->
-        <path d="M15 -15 L-15 15" stroke="url(#xGradient)" stroke-width="6" stroke-linecap="round" fill="none">
-            <animate attributeName="stroke-width" values="7;5;7" dur="2s" repeatCount="indefinite"/>
-        </path>
-
-        <!-- Center intersection -->
-        <circle cx="0" cy="0" r="3" fill="url(#xGradient)">
-            <animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite"/>
-        </circle>
-    </g>
-
-    <!-- Flow particles -->
-    <circle cx="50" cy="70" r="2" fill="#3B82F6" opacity="0.7">
-        <animateTransform attributeName="transform" type="translate" values="0 0; 100 30; 0 0" dur="4s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0;1;0" dur="4s" repeatCount="indefinite"/>
+    
+    <!-- Center intersection -->
+    <circle cx="0" cy="0" r="3" fill="url(#xGradient)">
+      <animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite"/>
     </circle>
-
-    <circle cx="75" cy="130" r="1.5" fill="#8B5CF6" opacity="0.6">
-        <animateTransform attributeName="transform" type="translate" values="0 0; 70 -10; 0 0" dur="3s" begin="1s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0;1;0" dur="3s" begin="1s" repeatCount="indefinite"/>
-    </circle>
-
-    <circle cx="150" cy="75" r="2" fill="#EC4899" opacity="0.7">
-        <animateTransform attributeName="transform" type="translate" values="0 0; -90 45; 0 0" dur="4s" begin="2s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0;1;0" dur="4s" begin="2s" repeatCount="indefinite"/>
-    </circle>
-
-    <!-- App name text -->
-    <text x="100" y="170" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="url(#mainGradient)">
-        Flow X
-    </text>
-
-    <!-- Subtle connecting line -->
-    <path d="M80 100 L120 100" stroke="url(#flowGradient)" stroke-width="1" fill="none" opacity="0.3">
-        <animate attributeName="opacity" values="0.1;0.5;0.1" dur="2s" repeatCount="indefinite"/>
-    </path>
+  </g>
+  
+  <!-- Flow particles -->
+  <circle cx="50" cy="70" r="2" fill="#3B82F6" opacity="0.7">
+    <animateTransform attributeName="transform" type="translate" values="0 0; 100 30; 0 0" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;1;0" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  
+  <circle cx="75" cy="130" r="1.5" fill="#8B5CF6" opacity="0.6">
+    <animateTransform attributeName="transform" type="translate" values="0 0; 70 -10; 0 0" dur="3s" begin="1s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;1;0" dur="3s" begin="1s" repeatCount="indefinite"/>
+  </circle>
+  
+  <circle cx="150" cy="75" r="2" fill="#EC4899" opacity="0.7">
+    <animateTransform attributeName="transform" type="translate" values="0 0; -90 45; 0 0" dur="4s" begin="2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;1;0" dur="4s" begin="2s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- App name text -->
+  <text x="100" y="170" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="url(#mainGradient)">
+    Flow X
+  </text>
+  
+  <!-- Subtle connecting line -->
+  <path d="M80 100 L120 100" stroke="url(#flowGradient)" stroke-width="1" fill="none" opacity="0.3">
+    <animate attributeName="opacity" values="0.1;0.5;0.1" dur="2s" repeatCount="indefinite"/>
+  </path>
 </svg>

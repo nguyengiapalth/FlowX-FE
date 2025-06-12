@@ -16,15 +16,11 @@ import {
   Building,
   Calendar,
   Users,
-  Star,
-  MoreHorizontal,
   Edit,
   Trash2,
-  UserPlus,
   Eye,
   ChevronRight
 } from 'lucide-react';
-import {formatDate} from "../utils/format.util.ts";
 
 interface Project {
   id: number;

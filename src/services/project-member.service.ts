@@ -20,17 +20,6 @@ class ProjectMemberService {
     }
 
     /**
-     * Update project member by ID
-     */
-    async updateProjectMember(id: number, request: ProjectMemberUpdateRequest): Promise<FlowXResponse<ProjectMemberResponse>> {
-        const response = await apiService.instance.put<FlowXResponse<ProjectMemberResponse>>(
-            `/api/project-member/update/${id}`,
-            request
-        );
-        return response.data;
-    }
-
-    /**
      * Bulk update member status
      */
     async bulkUpdateMemberStatus(memberIds: number[], status: MemberStatus): Promise<FlowXResponse<void>> {

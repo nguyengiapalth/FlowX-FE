@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth-store';
 import { useProfileStore } from '../stores/profile-store';
 import { useDepartmentStore } from '../stores/department-store';
 import { useProjectStore } from '../stores/project-store';
+import { useNavigationActions } from '../utils/navigation.utils';
 import NotificationDropdown from './NotificationDropdown';
 import { 
   Sun, 
@@ -30,7 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const navigate = useNavigate();
+  const { handleGoToLogin } = useNavigationActions();
   const { logout, isGlobalManager } = useAuthStore();
   const { clearProfile } = useProfileStore();
   const { clearDepartments } = useDepartmentStore();
@@ -49,7 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     console.log('Đăng xuất thành công');
     setShowLogoutModal(false);
     // Redirect to auth page
-    navigate('/login', { replace: true });
+    handleGoToLogin();
   };
 
   const cancelLogout = () => {
@@ -71,8 +72,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Logo and Brand */}
           <div className="flex items-center">
             <Link to="/newsfeed" className="flex-shrink-0 flex items-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center shadow-md">
-                <img src="/vite.svg" alt="FlowX Logo" className="w-12 h-12 object-cover"/>
+              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center shadow-md">
+                <span className="text-white text-sm font-bold">F</span>
               </div>
               <h1 className="ml-2 text-xl font-bold text-gray-900">FlowX</h1>
             </Link>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ImageCropper } from '../utils/ImageCropper';
 import { useContentStore } from '../../stores/content-store';
-import { X, Plus, Upload, Info, Loader2 } from 'lucide-react';
+import { X, Plus, Upload, Loader2 } from 'lucide-react';
 import fileService from '../../services/file.service';
 import contentService from '../../services/content.service';
 import type { ContentCreateRequest } from '../../types/content';

@@ -1,7 +1,5 @@
-import axios from 'axios';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { envConfig } from '../configs/env.config';
 import { useAuthStore } from './auth-store';
 import projectService from "../services/project.service.ts";
 
@@ -35,7 +33,7 @@ interface ProjectState {
 
 export const useProjectStore = create<ProjectState>()(
     persist(
-        (set, get) => ({
+        (set) => ({
             // Initial state
             myProjects: [],
             isLoading: false,

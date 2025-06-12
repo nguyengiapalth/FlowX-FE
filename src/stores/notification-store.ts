@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { NotificationResponse, NotificationCreateRequest } from '../types/notification';
+import type { NotificationResponse } from '../types/notification';
 import notificationService from '../services/notification.service';
 import webSocketService from '../services/websocket.service';
 import type { Page } from '../types/common';

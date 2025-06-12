@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTaskStore } from '../stores/task-store';
-import { useAuthStore } from '../stores/auth-store';
 import { useNavigationActions } from '../utils/navigation.utils';
 import TaskDetail from '../components/tasks/TaskDetail';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';

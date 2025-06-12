@@ -265,19 +265,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
   const displayFiles = showAllFiles ? content.files : content.files?.slice(0, maxDisplayFiles);
   const hasMoreFiles = content.files && content.files.length > maxDisplayFiles;
 
-  // Get random gradient for avatar
-  const getAvatarGradient = (name: string) => {
-    const gradients = [
-      'from-blue-500 to-purple-600',
-      'from-green-500 to-teal-600', 
-      'from-yellow-500 to-orange-600',
-      'from-pink-500 to-rose-600',
-      'from-indigo-500 to-blue-600',
-      'from-red-500 to-pink-600'
-    ];
-    const index = name.charCodeAt(0) % gradients.length;
-    return gradients[index];
-  };
+
 
   return (
     <div className={`group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 ${

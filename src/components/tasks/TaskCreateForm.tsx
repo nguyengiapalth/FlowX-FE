@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { TaskCreateRequest, TaskResponse } from '../../types/task.ts';
-import type { TaskStatus, PriorityLevel, ContentTargetType } from '../../types/enums.ts';
+import type { PriorityLevel, ContentTargetType } from '../../types/enums.ts';
 import type { UserResponse } from '../../types/user.ts';
 import { useTaskStore } from '../../stores/task-store';
 import userService from '../../services/user.service.ts';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useProfileStore } from '../stores/profile-store';
 import { useAuthStore } from '../stores/auth-store';
 import departmentService from '../services/department.service';
@@ -7,13 +7,9 @@ import Toast from '../components/utils/Toast.tsx';
 import DepartmentManageModal from '../components/utils/DepartmentManageModal';
 import type { DepartmentResponse, DepartmentCreateRequest, DepartmentUpdateRequest } from '../types/department';
 import { formatDate } from '../utils/format.util';
-import { useDepartmentStore } from '../stores/department-store';
 import { 
   Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Building2 
+  Search 
 } from 'lucide-react';
 
 interface Department {

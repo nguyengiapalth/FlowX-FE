@@ -19,14 +19,9 @@ import {
   AlertTriangle,
   Edit,
   User,
-  Calendar,
-  Phone,
-  MapPin,
   Save,
-  X,
-  Github,
   Linkedin,
-  Twitter, LucideFileX2, LucideTwitter, XIcon
+  Twitter
 } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {
@@ -914,7 +909,7 @@ export const ProfilePage: React.FC = () => {
                            {displayUser.facebook && (
                              <div>
                                <span className="text-sm text-gray-600 flex items-center space-x-2 mb-2">
-                                    <Image src="/facebook-icon.svg" alt="Facebook icon" width={16} height={16} />
+                                    <img src="/facebook-icon.svg" alt="Facebook icon" width={16} height={16} />
                                  <span>Facebook</span>
                                </span>
                                <a 

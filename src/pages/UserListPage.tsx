@@ -10,14 +10,8 @@ import userService from '../services/user.service';
 import departmentService from '../services/department.service';
 import Toast from '../components/utils/Toast.tsx';
 import type { UserResponse, UserCreateRequest } from '../types/user';
-import type { DepartmentResponse } from '../types/department';
 
-import { formatDate } from '../utils/format.util';
 import { 
-  Plus, 
-  Search, 
-  Users, 
-  Shield, 
   User 
 } from 'lucide-react';
 

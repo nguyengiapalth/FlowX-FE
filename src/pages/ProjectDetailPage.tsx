@@ -7,7 +7,6 @@ import {
   ChevronRight, 
   Edit, 
   Plus, 
-  UserPlus, 
   X, 
   Building, 
   Loader2, 
@@ -28,7 +27,6 @@ import { ContentModal } from '../components/content/ContentModal';
 import projectService from '../services/project.service';
 import projectMemberService from '../services/project-member.service';
 import userService from '../services/user.service';
-import contentService from "../services/content.service.ts";
 import type { ProjectResponse, ProjectMemberResponse } from '../types/project';
 import type { UserResponse } from '../types/user';
 import type { ContentCreateRequest, ContentResponse } from '../types/content';

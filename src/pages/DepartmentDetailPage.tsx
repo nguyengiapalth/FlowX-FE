@@ -7,10 +7,7 @@ import {
   ChevronRight, 
   Edit, 
   Plus, 
-  UserPlus, 
-  X, 
-  Building, 
-  Loader2 
+  UserPlus 
 } from 'lucide-react';
 import { useAuthStore } from '../stores/auth-store';
 import { useContentStore } from '../stores/content-store';
