@@ -5,7 +5,7 @@ import type {
     TaskCreateRequest, 
     TaskUpdateRequest 
 } from '../types/task';
-import type { TaskStatus } from '../types/enums/enums';
+import type { TaskStatus } from '../types/enums.ts';
 
 class TaskService {
     /**

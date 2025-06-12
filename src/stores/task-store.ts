@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { TaskResponse, TaskCreateRequest, TaskUpdateRequest } from '../types/task';
-import type { TaskStatus, ContentTargetType } from '../types/enums/enums';
+import type { TaskStatus, ContentTargetType } from '../types/enums.ts';
 import { useAuthStore } from './auth-store';
 import taskService from '../services/task.service';
 

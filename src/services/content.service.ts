@@ -5,7 +5,7 @@ import type {
     ContentUpdateRequest,
     ContentResponse
 } from '../types/content';
-import type { ContentTargetType } from '../types/enums/enums';
+import type { ContentTargetType } from '../types/enums.ts';
 
 class ContentService {
     /**

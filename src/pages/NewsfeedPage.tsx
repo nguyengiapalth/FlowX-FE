@@ -1,78 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { useContentStore } from '../stores/content-store';
-import { ContentCard, ExpandableCreateForm, ContentModal } from '../index.ts';
-import SimpleToast from '../components/utils/SimpleToast.tsx';
+import { ExpandableCreateForm } from '../components/content/ExpandableCreateForm';
+import { ContentCard } from '../components/content/ContentCard';
+import { ContentModal } from '../components/content/ContentModal';
+import SimpleToast from '../components/utils/SimpleToast';
+import { useAllContents } from '../hooks/useContent';
+import fileService from '../services/file.service';
 import type { ContentCreateRequest } from '../types/content';
 import type { FileCreateRequest } from '../types/file';
-import fileService from '../services/file.service';
 
 const NewsfeedPage: React.FC = () => {
-  const {
-    contents, 
-    isLoading, 
-    error, 
-    fetchAllContents, 
-    createContent, 
-    deleteContent,
-    syncContentFiles
-  } = useContentStore();
-  
-  const [refreshing, setRefreshing] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showContentModal, setShowContentModal] = useState(false);
   const [selectedContentId, setSelectedContentId] = useState<number | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  useEffect(() => {
-    loadContents();
-  }, []);
-
-  const loadContents = async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true);
-      }
-      
-      await fetchAllContents();
-      
-      if (isRefresh) {
-        setToast({ 
-          message: 'Đã cập nhật nội dung mới nhất!', 
-          type: 'success' 
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load contents:', error);
-      setToast({ 
-        message: 'Không thể tải nội dung. Vui lòng thử lại sau.', 
-        type: 'error' 
-      });
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const handleRefresh = () => {
-    loadContents(true);
-  };
+  const {
+    contents,
+    isLoading,
+    error,
+    refreshContents,
+    createContent,
+    deleteContent
+  } = useAllContents();
 
   const handleCreateContent = async (request: ContentCreateRequest, files?: File[]) => {
     try {
-      // First, create the content
-      const createdContent = await createContent({
-        ...request,
-        contentTargetType: 'GLOBAL',
-        targetId: 0,
-        parentId: -1
-      });
-
-      console.log('createdContent', createdContent);
-
+      // Create the content first
+      const newContent = await createContent(request);
+      
       // If there are files, upload them
-      if (files && files.length > 0 && createdContent.id) {
-        await uploadContentFiles(createdContent.id, files);
+      if (files && files.length > 0) {
+        await uploadContentFiles(newContent.id, files);
         
         // Sync the content to update hasFile flag
-        await syncContentFiles(createdContent.id);
+        // await syncContentFiles(newContent.id);
       }
       
       setToast({ 
@@ -171,7 +131,6 @@ const NewsfeedPage: React.FC = () => {
     });
   };
 
-
   // Show error from store
   useEffect(() => {
     if (error) {
@@ -182,7 +141,7 @@ const NewsfeedPage: React.FC = () => {
     }
   }, [error]);
 
-  if (isLoading && !refreshing) {
+  if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="flex flex-col items-center justify-center h-64">
@@ -206,8 +165,8 @@ const NewsfeedPage: React.FC = () => {
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Newsfeed</h1>
-        <p className="text-gray-600">Cập nhật tin tức và thông báo mới nhất từ công ty</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Bảng tin</h1>
+        <p className="text-gray-600">Cập nhật tin tức và hoạt động mới nhất từ toàn công ty, phòng ban và dự án</p>
       </div>
 
       {/* Create Post Section */}
@@ -259,11 +218,10 @@ const NewsfeedPage: React.FC = () => {
       {contents.length > 0 && (
         <div className="text-center mt-8">
           <button 
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            onClick={refreshContents}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            {refreshing ? 'Đang tải...' : 'Xem thêm'}
+            Làm mới
           </button>
         </div>
       )}
@@ -275,7 +233,7 @@ const NewsfeedPage: React.FC = () => {
           onClose={closeContentModal}
           contentId={selectedContentId}
           showReplyForm={true}
-          onContentUpdate={loadContents}
+          onContentUpdate={refreshContents}
         />
       )}
     </div>

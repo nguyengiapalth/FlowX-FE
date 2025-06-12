@@ -5,7 +5,7 @@ import type {
     ProjectMemberCreateRequest, 
     ProjectMemberUpdateRequest 
 } from '../types/project';
-import type { MemberStatus, RoleDefault } from '../types/enums/enums';
+import type { MemberStatus, RoleDefault } from '../types/enums.ts';
 
 class ProjectMemberService {
     /**

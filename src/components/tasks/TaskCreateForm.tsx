@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { TaskCreateRequest, TaskResponse } from '../../types/task.ts';
-import type { TaskStatus, PriorityLevel, ContentTargetType } from '../../types/enums/enums.ts';
+import type { TaskStatus, PriorityLevel, ContentTargetType } from '../../types/enums.ts';
 import type { UserResponse } from '../../types/user.ts';
-import taskService from '../../services/task.service.ts';
+import { useTaskStore } from '../../stores/task-store';
 import userService from '../../services/user.service.ts';
 import SimpleToast from '../utils/SimpleToast.tsx';
 import { 
@@ -24,6 +24,7 @@ const TaskCreateForm: React.FC<TaskCreateFormProps> = ({
   targetId = 0,
   availableUsers
 }) => {
+  const { createTask, syncTaskFiles } = useTaskStore();
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -76,14 +77,24 @@ const TaskCreateForm: React.FC<TaskCreateFormProps> = ({
 
     try {
       setLoading(true);
-      const response = await taskService.createTask(formData);
+      const createdTask = await createTask(formData);
       
-      if (response.code === 200 && response.data) {
+      if (createdTask) {
+        // Auto-sync files for newly created task to ensure hasFiles flag is correct
+        try {
+          await syncTaskFiles(createdTask.id);
+        } catch (syncError) {
+          console.error('Failed to sync files for new task:', syncError);
+          // Continue even if sync fails
+        }
+        
         setToast({ message: 'Tạo task thành công!', type: 'success' });
-        onTaskCreated?.(response.data);
+        onTaskCreated?.(createdTask);
         setTimeout(() => {
           onClose();
         }, 1000);
+      } else {
+        setToast({ message: 'Có lỗi xảy ra khi tạo task', type: 'error' });
       }
     } catch (error) {
       console.error('Failed to create task:', error);

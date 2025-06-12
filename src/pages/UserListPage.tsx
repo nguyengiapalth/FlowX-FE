@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigationActions } from '../utils/navigation.utils';
 import { useProfileStore } from '../stores/profile-store';
 import { useAuthStore } from '../stores/auth-store';
 import { useDepartmentStore } from '../stores/department-store';
 import { OnlineStatus } from '../components/utils/OnlineStatus';
+import { UserAvatarName } from '../components/shared/UserAvatarName';
 import { useUserPresence } from '../hooks/useUserPresence';
 import userService from '../services/user.service';
 import departmentService from '../services/department.service';
@@ -42,12 +43,12 @@ interface UserFormData {
 }
 
 const UserListPage: React.FC = () => {
-  const navigate = useNavigate();
+  const { handleProfileClick } = useNavigationActions();
   const { user: currentUser } = useProfileStore();
   const { isGlobalManager, isDepartmentManager } = useAuthStore();
   const { isUserOnline } = useUserPresence();
   const [searchTerm, setSearchTerm] = useState('');
-  const { departments } = useDepartmentStore();
+  const { departments, setDepartments } = useDepartmentStore();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<number | 'all'>('all');
   
@@ -95,9 +96,9 @@ const UserListPage: React.FC = () => {
   // Handle view profile
   const handleViewProfile = (userId: number) => {
     if (userId === currentUser?.id) {
-      navigate('/profile');
+      handleProfileClick();
     } else {
-      navigate(`/profile/${userId}`);
+      handleProfileClick(userId);
     }
   };
 
@@ -441,33 +442,12 @@ const UserListPage: React.FC = () => {
               <div className="px-6 py-4 grid grid-cols-12 gap-4 items-center">
                 {/* User Info */}
                 <div className="col-span-3">
-                  <div className="flex items-center space-x-3">
-                    <div 
-                      className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all flex-shrink-0"
-                      onClick={() => handleViewProfile(user.id)}
-                      title="Click để xem profile"
-                    >
-                      {user.avatar ? (
-                        <img src={user.avatar} alt={user.fullName} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm font-semibold">
-                          {user.fullName.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p 
-                        className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors truncate"
-                        onClick={() => handleViewProfile(user.id)}
-                        title={user.fullName}
-                      >
-                        {user.fullName}
-                      </p>
-                      <p className="text-sm text-gray-500 truncate" title={user.email}>
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
+                  <UserAvatarName 
+                    user={user}
+                    size="md"
+                    showEmail={true}
+                    clickable={true}
+                  />
                 </div>
 
                 {/* Position */}
@@ -709,24 +689,16 @@ const UserListPage: React.FC = () => {
             
             {/* User info */}
             <div className="bg-gray-50 rounded-lg p-3 mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                  {selectedUser.avatar ? (
-                    <img src={selectedUser.avatar} alt={selectedUser.fullName} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm font-semibold">
-                      {selectedUser.fullName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">{selectedUser.fullName}</p>
-                  <p className="text-sm text-gray-500">{selectedUser.email}</p>
-                  <p className="text-xs text-gray-400">
-                    Phòng ban hiện tại: {selectedUser.departmentName || 'Chưa phân công'}
-                  </p>
-                </div>
-              </div>
+              <UserAvatarName 
+                user={selectedUser}
+                size="md"
+                showEmail={true}
+                clickable={false}
+                layout="horizontal"
+              />
+              <p className="text-xs text-gray-400 mt-2">
+                Phòng ban hiện tại: {selectedUser.departmentName || 'Chưa phân công'}
+              </p>
             </div>
 
             {/* Department selection */}
@@ -796,24 +768,16 @@ const UserListPage: React.FC = () => {
             
             {/* User info */}
             <div className="bg-gray-50 rounded-lg p-3 mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                  {selectedUser.avatar ? (
-                    <img src={selectedUser.avatar} alt={selectedUser.fullName} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm font-semibold">
-                      {selectedUser.fullName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">{selectedUser.fullName}</p>
-                  <p className="text-sm text-gray-500">{selectedUser.email}</p>
-                  <p className="text-xs text-gray-400">
-                    Chức vụ hiện tại: {selectedUser.position || 'Chưa phân công'}
-                  </p>
-                </div>
-              </div>
+              <UserAvatarName 
+                user={selectedUser}
+                size="md"
+                showEmail={true}
+                clickable={false}
+                layout="horizontal"
+              />
+              <p className="text-xs text-gray-400 mt-2">
+                Chức vụ hiện tại: {selectedUser.position || 'Chưa phân công'}
+              </p>
             </div>
 
             {/* Position input */}
@@ -874,7 +838,6 @@ const UserListPage: React.FC = () => {
       <Toast
         message={toast.message}
         type={toast.type}
-        isVisible={toast.visible}
         onClose={hideToast}
       />
     </div>

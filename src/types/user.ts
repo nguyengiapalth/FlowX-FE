@@ -1,4 +1,4 @@
-import type {UserStatus} from './enums/enums.ts';
+import type {UserStatus} from './enums.ts';
 import type {DepartmentResponse} from "./department.ts";
 
 export interface UserResponse {

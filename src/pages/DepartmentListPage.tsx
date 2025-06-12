@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useProfileStore } from '../stores/profile-store';
 import { useAuthStore } from '../stores/auth-store';
 import departmentService from '../services/department.service';
@@ -6,7 +7,6 @@ import Toast from '../components/utils/Toast.tsx';
 import DepartmentManageModal from '../components/utils/DepartmentManageModal';
 import type { DepartmentResponse, DepartmentCreateRequest, DepartmentUpdateRequest } from '../types/department';
 import { formatDate } from '../utils/format.util';
-import { useNavigate } from 'react-router-dom';
 import { useDepartmentStore } from '../stores/department-store';
 import { 
   Plus, 
@@ -312,9 +312,11 @@ const DepartmentListPage: React.FC = () => {
 
               {/* Management Actions - Only for Global Managers */}
               {isGlobalManager() && (
-                <div className="absolute top-2 right-2 flex space-x-1">
+                <div className="absolute top-2 right-2 flex space-x-1 z-10">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       // Convert Department to DepartmentResponse
                       const deptResponse: DepartmentResponse = {
                         ...department,
@@ -330,7 +332,9 @@ const DepartmentListPage: React.FC = () => {
                     </svg>
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       // Convert Department to DepartmentResponse
                       const deptResponse: DepartmentResponse = {
                         ...department,
@@ -349,11 +353,14 @@ const DepartmentListPage: React.FC = () => {
               )}
             </div>
 
-            {/* Content */}
-            <div className="p-4">
+            {/* Content - Wrapped with Link for navigation */}
+            <Link 
+              to={`/department/${department.id}`}
+              className="block p-4 hover:bg-gray-50 transition-colors"
+            >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 text-lg mb-1">{department.name}</h3>
+                  <h3 className="font-semibold text-gray-900 text-lg mb-1 hover:text-blue-600 transition-colors">{department.name}</h3>
                   <p className="text-gray-600 text-sm line-clamp-2">{department.description}</p>
                 </div>
                 {department.isJoined && (
@@ -366,10 +373,18 @@ const DepartmentListPage: React.FC = () => {
               </div>
 
               {/* Created Date */}
-              <div className="text-sm text-gray-500 mb-4">
+              <div className="text-sm text-gray-500 mb-2">
                 <span className="font-medium">Ngày tạo:</span> {formatDate(department.createdAt)}
               </div>
-            </div>
+              
+              {/* Navigation indicator */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-blue-600 font-medium">Xem chi tiết</span>
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </Link>
           </div>
         ))}
       </div>

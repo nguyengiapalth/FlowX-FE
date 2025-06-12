@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getReactionIcon, formatReactionText } from '../../types/content';
-import { formatTimeAgo, getAvatarGradient } from '../../utils/format.util';
+import { formatTimeAgo } from '../../utils/format.util';
+import { UserAvatar } from '../shared/UserAvatar';
+import { UserNameCard } from '../shared/UserNameCard';
 import type { ContentReactionResponse } from '../../types/content';
 import contentReactionService from '../../services/contentReaction.service';
 import { 
@@ -61,7 +63,7 @@ export const ReactionListModal: React.FC<ReactionListModalProps> = ({
       } else {
         setError('Không thể tải danh sách reactions');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch reactions:', err);
       setError('Có lỗi xảy ra khi tải danh sách reactions');
     } finally {
@@ -165,20 +167,33 @@ export const ReactionListModal: React.FC<ReactionListModalProps> = ({
               {filteredReactions.map((reaction) => (
                 <div key={reaction.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center space-x-3">
-                    {/* Avatar */}
-                    <div className={`relative w-10 h-10 bg-gradient-to-br ${getAvatarGradient(reaction.user?.fullName || 'U')} rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm`}>
-                      {reaction.user?.fullName?.charAt(0).toUpperCase() || 'U'}
-                    </div>
+                    {/* User Avatar */}
+                    <UserAvatar 
+                      user={{
+                        id: reaction.user?.id || 0,
+                        fullName: reaction.user?.fullName || 'Người dùng ẩn danh',
+                        avatar: reaction.user?.avatar
+                      }}
+                      size="md"
+                      clickable={!!reaction.user?.id}
+                    />
                     
                     {/* User Info */}
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 truncate">
-                        {reaction.user?.fullName || 'Người dùng ẩn danh'}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {formatTimeAgo(reaction.createdAt)}
-                      </p>
-                    </div>
+                    <UserNameCard 
+                      user={{
+                        id: reaction.user?.id || 0,
+                        fullName: reaction.user?.fullName || 'Người dùng ẩn danh',
+                        position: reaction.user?.position,
+                        email: reaction.user?.email
+                      }}
+                      size="sm"
+                      showTime={true}
+                      time={formatTimeAgo(reaction.createdAt)}
+                      clickable={!!reaction.user?.id}
+                      variant="minimal"
+                      layout="horizontal"
+                      className="flex-1 min-w-0"
+                    />
                   </div>
                   
                   {/* Reaction Icon */}

@@ -5,6 +5,7 @@ import type {UserRoleResponse} from "../types/userrole.ts";
 import { isJWTExpired, isValidJWTFormat } from '../utils/jwt.utils';
 import { hasRefreshToken } from '../utils/cookie.utils';
 import userRoleService from "../services/user-role.service.ts";
+import authService from "../services/auth.service.ts";
 
 
 interface AuthState {
@@ -154,6 +155,7 @@ export const useAuthStore = create<AuthState>()(
             },
 
             logout: () => {
+                authService.logout()
                 get().clearAuth();
             },
 

@@ -81,7 +81,7 @@ export const ReactionDisplay: React.FC<ReactionDisplayProps> = ({
   // Get most popular reactions for display with better error handling
   const topReactions = reactionSummary?.reactionCounts 
     ? Object.entries(reactionSummary.reactionCounts)
-        .filter(([type, count]) => {
+        .filter(([count]) => {
           const numCount = Number(count);
           return !isNaN(numCount) && numCount > 0;
         })

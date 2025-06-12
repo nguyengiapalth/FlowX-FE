@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import type { ContentCreateRequest } from '../../types/content';
-import type { ContentTargetType } from '../../types/enums/enums';
+import type { ContentTargetType } from '../../types/enums.ts';
 import { useProfileStore } from '../../stores/profile-store';
-import {File, Loader, Loader2, X} from "lucide-react";
+import {File, Loader2, X} from "lucide-react";
 
 interface ReplyContentFormProps {
   contentTargetType: ContentTargetType;
@@ -53,6 +53,7 @@ export const ReplyContentForm: React.FC<ReplyContentFormProps> = ({
     setIsSubmitting(true);
     try {
       const request: ContentCreateRequest = {
+        subtitle: 'reply',
         body: body.trim(),
         contentTargetType,
         targetId,
@@ -130,7 +131,7 @@ export const ReplyContentForm: React.FC<ReplyContentFormProps> = ({
     // Submit on Ctrl+Enter or Cmd+Enter
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
-      handleSubmit(e as any);
+      handleSubmit(e as never);
     }
   };
 

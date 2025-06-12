@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth-store';
 import { useProfileStore } from '../stores/profile-store';
 import { useDepartmentStore } from '../stores/department-store';
@@ -8,6 +7,7 @@ import { useContentStore } from '../stores/content-store';
 import { useTaskStore } from '../stores/task-store';
 import { ExpandableCreateForm } from '../index.ts';
 import SimpleToast from '../components/utils/SimpleToast';
+import { useNavigationActions } from '../utils/navigation.utils';
 import type { ContentCreateRequest } from '../types/content';
 import type { FileCreateRequest } from '../types/file';
 import { formatTimeAgo, getPriorityColor, getPriorityText, getStatusText } from '../utils/format.util';
@@ -23,7 +23,14 @@ import {
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
-  const navigate = useNavigate();
+  const {
+    handleCreateProject,
+    handleCreateTask,
+    handleInviteMember,
+    handleViewAllProjects,
+    handleViewAllActivities,
+    handleProjectClick
+  } = useNavigationActions();
   const { isManager, isGlobalManager, userRoles } = useAuthStore();
   const { user } = useProfileStore();
   const { departments, fetchDepartments } = useDepartmentStore();
@@ -118,30 +125,7 @@ export const DashboardPage: React.FC = () => {
     await Promise.all(uploadPromises);
   };
 
-  // Quick action handlers
-  const handleCreateProject = () => {
-    navigate('/projects');
-  };
 
-  const handleCreateTask = () => {
-    navigate('/tasks');
-  };
-
-  const handleInviteMember = () => {
-    navigate('/users');
-  };
-
-  const handleViewAllProjects = () => {
-    navigate('/projects');
-  };
-
-  const handleViewAllActivities = () => {
-    navigate('/newsfeed');
-  };
-
-  const handleProjectClick = (projectId: number) => {
-    navigate(`/project/${projectId}`);
-  };
 
   const recentProjects = myProjects.slice(0, 3).map((project: any) => ({
     id: project.id,

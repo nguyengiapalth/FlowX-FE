@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useProfileStore } from '../../stores/profile-store';
 import fileService from '../../services/file.service';
 import type { FileResponse, FileCreateRequest } from '../../types/file';
-import type { FileTargetType } from '../../types/enums/enums';
+import type { FileTargetType } from '../../types/enums.ts';
 
 interface TaskFileUploadProps {
   taskId: number;

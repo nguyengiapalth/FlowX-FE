@@ -6,7 +6,7 @@ import fileService from '../../services/file.service';
 import contentService from '../../services/content.service';
 import type { ContentCreateRequest } from '../../types/content';
 import type { FileCreateRequest } from '../../types/file';
-import type { ContentTargetType } from '../../types/enums/enums';
+import type { ContentTargetType } from '../../types/enums.ts';
 
 interface BackgroundModalProps {
   isOpen: boolean;

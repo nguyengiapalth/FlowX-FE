@@ -71,8 +71,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Logo and Brand */}
           <div className="flex items-center">
             <Link to="/newsfeed" className="flex-shrink-0 flex items-center">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center shadow-md">
-                <span className="text-white text-sm font-bold">F</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center shadow-md">
+                <img src="/vite.svg" alt="FlowX Logo" className="w-12 h-12 object-cover"/>
               </div>
               <h1 className="ml-2 text-xl font-bold text-gray-900">FlowX</h1>
             </Link>

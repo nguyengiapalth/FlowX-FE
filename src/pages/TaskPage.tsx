@@ -1,20 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigationActions } from '../utils/navigation.utils';
 import { useAuthStore } from '../stores/auth-store';
 import { useProfileStore } from '../stores/profile-store';
 import { useTaskStore } from '../stores/task-store';
+import { UserAvatarName } from '../components/shared/UserAvatarName';
 import taskService from '../services/task.service';
 import type { TaskResponse } from '../types/task';
-import { Plus, FileText } from 'lucide-react';
+import { Plus, FileText, Paperclip } from 'lucide-react';
 import TaskCreateForm from '../components/tasks/TaskCreateForm.tsx';
 import SimpleToast from '../components/utils/SimpleToast.tsx';
 
 const TaskPage: React.FC = () => {
-  const navigate = useNavigate();
+  const { handleTaskClick } = useNavigationActions();
   const { user } = useProfileStore();
+  const { 
+    tasks, 
+    myAssignedTasks, 
+    myCreatedTasks, 
+    isLoading,
+    error,
+    fetchAllTasks,
+    fetchMyAssignedTasks,
+    fetchMyCreatedTasks,
+    createTask,
+    updateTaskInList,
+    removeTask
+  } = useTaskStore();
+  
   const [activeTab, setActiveTab] = useState<'all' | 'my-tasks' | 'assigned'>('all');
-  const [tasks, setTasks] = useState<TaskResponse[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -24,55 +37,60 @@ const TaskPage: React.FC = () => {
 
   const fetchTasks = async () => {
     try {
-      setLoading(true);
-      let response;
-      
       switch (activeTab) {
         case 'my-tasks':
-          response = await taskService.getMyAssignedTasks();
+          await fetchMyAssignedTasks();
           break;
         case 'assigned':
-          response = await taskService.getMyCreatedTasks();
+          await fetchMyCreatedTasks();
           break;
         default:
-          response = await taskService.getAllTasks();
+          await fetchAllTasks();
           break;
-      }
-      
-      if (response.code === 200 && response.data) {
-        setTasks(response.data);
       }
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
       setToast({ message: 'Có lỗi xảy ra khi tải danh sách task', type: 'error' });
-    } finally {
-      setLoading(false);
     }
   };
 
+  // Get current tasks based on active tab
+  const getCurrentTasks = () => {
+    switch (activeTab) {
+      case 'my-tasks':
+        return myAssignedTasks;
+      case 'assigned':
+        return myCreatedTasks;
+      default:
+        return tasks;
+    }
+  };
+
+  const currentTasks = getCurrentTasks();
+
   const handleTaskUpdate = (updatedTask: TaskResponse) => {
-    setTasks(prev => prev.map(task => 
-      task.id === updatedTask.id ? updatedTask : task
-    ));
+    updateTaskInList(updatedTask);
     setToast({ message: 'Cập nhật task thành công!', type: 'success' });
   };
 
   const handleTaskDelete = (taskId: number) => {
-    setTasks(prev => prev.filter(task => task.id !== taskId));
+    removeTask(taskId);
     setToast({ message: 'Xóa task thành công!', type: 'success' });
   };
 
-  const handleTaskCreated = (newTask: TaskResponse) => {
-    setTasks(prev => [newTask, ...prev]);
+  const handleTaskCreated = async (newTask: TaskResponse) => {
+    // The store's createTask method will automatically add to the appropriate lists
     setToast({ message: 'Tạo task thành công!', type: 'success' });
+    // Refresh the current view
+    await fetchTasks();
   };
 
   const getTaskStats = () => {
     return {
-      total: tasks.length,
-      inProgress: tasks.filter(t => t.status === 'IN_PROGRESS').length,
-      completed: tasks.filter(t => t.status === 'COMPLETED').length,
-      toDo: tasks.filter(t => t.status === 'TO_DO').length
+      total: currentTasks.length,
+      inProgress: currentTasks.filter(t => t.status === 'IN_PROGRESS').length,
+      completed: currentTasks.filter(t => t.status === 'COMPLETED').length,
+      toDo: currentTasks.filter(t => t.status === 'TO_DO').length
     };
   };
 
@@ -182,17 +200,17 @@ const TaskPage: React.FC = () => {
               {activeTab === 'my-tasks' && 'Task của tôi'}
               {activeTab === 'assigned' && 'Task tôi giao'}
               <span className="ml-2 text-sm font-normal text-gray-500">
-                ({tasks.length} task)
+                ({currentTasks.length} task)
               </span>
             </h2>
           </div>
           
-          {loading ? (
+          {isLoading ? (
             <div className="p-12 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-gray-500">Đang tải danh sách task...</p>
             </div>
-          ) : tasks.length === 0 ? (
+          ) : currentTasks.length === 0 ? (
             <div className="p-12 text-center">
               <FileText className="w-16 h-16 mx-auto text-gray-300 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-1">Không có task nào</h3>
@@ -214,7 +232,7 @@ const TaskPage: React.FC = () => {
               </div>
 
               {/* Table Body */}
-              {tasks.map((task) => {
+              {currentTasks.map((task) => {
                 const getStatusColor = (status: string) => {
                   switch (status) {
                     case 'TO_DO': return 'bg-gray-100 text-gray-800';
@@ -265,7 +283,7 @@ const TaskPage: React.FC = () => {
                   <div
                       key={task.id} 
                       className="hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/tasks/${task.id}`)}
+                                              onClick={() => handleTaskClick(task.id)}
                       >
                     <div className="px-6 py-4 grid grid-cols-12 gap-4 items-center">
                       {/* Task Info */}
@@ -290,6 +308,12 @@ const TaskPage: React.FC = () => {
                                 Dept #{task.targetId}
                               </span>
                             )}
+                            {task.hasFiles && (
+                              <span className="inline-flex items-center text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded" title={`Có ${task.files?.length || 0} file đính kèm`}>
+                                <Paperclip className="w-3 h-3 mr-1" />
+                                {task.files?.length ? `${task.files.length} files` : 'Files'}
+                              </span>
+                            )}
                             {isOverdue && (
                               <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
                                 Quá hạn
@@ -301,24 +325,15 @@ const TaskPage: React.FC = () => {
 
                       {/* Assignee */}
                       <div className="col-span-2">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                            {task.assignee?.avatar ? (
-                              <img 
-                                src={task.assignee.avatar} 
-                                alt={task.assignee.fullName} 
-                                className="w-full h-full object-cover" 
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-xs font-semibold text-gray-500">
-                                {task.assignee?.fullName?.charAt(0)?.toUpperCase() || '?'}
-                              </div>
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-900 truncate" title={task.assignee?.fullName || 'Chưa phân công'}>
-                            {task.assignee?.fullName || 'Chưa phân công'}
-                          </span>
-                        </div>
+                        {task.assignee ? (
+                          <UserAvatarName 
+                            user={task.assignee}
+                            size="sm"
+                            clickable={true}
+                          />
+                        ) : (
+                          <span className="text-sm text-gray-500">Chưa phân công</span>
+                        )}
                       </div>
 
                       {/* Due Date */}

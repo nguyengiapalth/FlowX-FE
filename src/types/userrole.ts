@@ -1,4 +1,4 @@
-import type {RoleScope} from './enums/enums.ts';
+import type {RoleScope} from './enums.ts';
 import type {UserResponse} from './user';
 
 

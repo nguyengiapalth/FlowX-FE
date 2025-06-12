@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { TaskResponse } from '../../types/task.ts';
 import type { UserResponse } from '../../types/user.ts';
-import type { ContentTargetType } from '../../types/enums/enums.ts';
+import type { ContentTargetType } from '../../types/enums.ts';
 import taskService from '../../services/task.service.ts';
 import userService from '../../services/user.service.ts';
 import departmentService from '../../services/department.service.ts';

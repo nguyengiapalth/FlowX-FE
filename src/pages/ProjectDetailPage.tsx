@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useProfileStore } from '../stores/profile-store';
+import { useNavigationActions } from '../utils/navigation.utils';
 import { 
   LayoutDashboard, 
   ChevronRight, 
@@ -11,28 +12,33 @@ import {
   Building, 
   Loader2, 
   Check, 
-  Users 
+  Users,
+  Crown,
+  User
 } from 'lucide-react';
 import { useAuthStore } from '../stores/auth-store';
 import { useContentStore } from '../stores/content-store';
+import { UserAvatarName } from '../components/shared/UserAvatarName';
 import DiscussionSection from '../components/content/DiscussionSection.tsx';
 import TaskSection from '../components/tasks/TaskSection.tsx';
 import { ExpandableCreateForm } from '../index.ts';
 import SimpleToast from '../components/utils/SimpleToast';
 import { BackgroundModal } from '../components/shared/BackgroundModal';
+import { ContentModal } from '../components/content/ContentModal';
 import projectService from '../services/project.service';
 import projectMemberService from '../services/project-member.service';
 import userService from '../services/user.service';
 import contentService from "../services/content.service.ts";
 import type { ProjectResponse, ProjectMemberResponse } from '../types/project';
 import type { UserResponse } from '../types/user';
-import type { ContentCreateRequest } from '../types/content';
+import type { ContentCreateRequest, ContentResponse } from '../types/content';
 import type { FileCreateRequest } from '../types/file';
+import type { RoleDefault } from '../types/enums';
 import fileService from '../services/file.service';
 
 const ProjectDetailPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const navigate = useNavigate();
+  const { handleProfileClick, navigate } = useNavigationActions();
   const { user } = useProfileStore();
   const { isManager } = useAuthStore();
   const { createContent, syncContentFiles } = useContentStore();
@@ -47,6 +53,10 @@ const ProjectDetailPage: React.FC = () => {
 
   // Background update states
   const [showBackgroundModal, setShowBackgroundModal] = useState(false);
+  
+  // Content detail modal states
+  const [selectedContent, setSelectedContent] = useState<ContentResponse | null>(null);
+  const [showContentModal, setShowContentModal] = useState(false);
 
   // Edit mode states for about section
   const [isEditingInfo, setIsEditingInfo] = useState(false);
@@ -66,14 +76,25 @@ const ProjectDetailPage: React.FC = () => {
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [selectedRole, setSelectedRole] = useState<string>('MEMBER');
 
+  // Role change states
+  const [changingRole, setChangingRole] = useState<{ [memberId: number]: boolean }>({});
+
   const projectIdNum = parseInt(projectId || '1');
 
   // Handle view profile
   const handleViewProfile = (userId: number) => {
     if (userId === user?.id) {
-      navigate('/profile');
+      handleProfileClick();
     } else {
-      navigate(`/user/${userId}`);
+      handleProfileClick(userId);
+    }
+  };
+
+  // Handle view content detail
+  const handleViewDetail = (_contentId: number, content?: ContentResponse) => {
+    if (content) {
+      setSelectedContent(content);
+      setShowContentModal(true);
     }
   };
 
@@ -258,6 +279,66 @@ const ProjectDetailPage: React.FC = () => {
         ? prev.filter(id => id !== userId)
         : [...prev, userId]
     );
+  };
+
+  const handleMemberRoleChange = async (memberId: number, newRole: RoleDefault) => {
+    setChangingRole(prev => ({ ...prev, [memberId]: true }));
+    
+    try {
+      const response = await projectMemberService.updateMemberRole(memberId, newRole);
+      
+      if (response.code === 200) {
+        // Update the members list with the new role
+        setMembers(prev => prev.map(member => 
+          member.id === memberId 
+            ? { ...member, role: newRole }
+            : member
+        ));
+        
+        const roleText = newRole === 'MANAGER' ? 'Quản lý' : 'Thành viên';
+        setToast({ 
+          message: `Đã chuyển vai trò thành ${roleText} thành công!`, 
+          type: 'success' 
+        });
+      } else {
+        setToast({ 
+          message: response.message || 'Không thể thay đổi vai trò', 
+          type: 'error' 
+        });
+      }
+    } catch (error: any) {
+      console.error('Failed to change member role:', error);
+      setToast({ 
+        message: error.message || 'Không thể thay đổi vai trò. Vui lòng thử lại.', 
+        type: 'error' 
+      });
+    } finally {
+      setChangingRole(prev => ({ ...prev, [memberId]: false }));
+    }
+  };
+
+  const getRoleText = (role: RoleDefault) => {
+    const roleMap: Record<RoleDefault, string> = {
+      'MANAGER': 'Quản lý',
+      'MEMBER': 'Thành viên',
+      'HR': 'Nhân sự',
+      'USER': 'Người dùng'
+    };
+    return roleMap[role] || role;
+  };
+
+  const getRoleColor = (role: RoleDefault) => {
+    const colorMap: Record<RoleDefault, string> = {
+      'MANAGER': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'MEMBER': 'bg-blue-100 text-blue-800 border-blue-200',
+      'HR': 'bg-green-100 text-green-800 border-green-200',
+      'USER': 'bg-gray-100 text-gray-800 border-gray-200'
+    };
+    return colorMap[role] || 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const getRoleIcon = (role: RoleDefault) => {
+    return role === 'MANAGER' ? Crown : User;
   };
 
   const uploadContentFiles = async (contentId: number, files: File[]) => {
@@ -511,46 +592,67 @@ const ProjectDetailPage: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-3">
                 {members.map((member) => (
-                  <div key={member.id} className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-center space-x-4">
-                      <div className="relative">
-                        <img
-                          src={member.user?.avatar || '/default-avatar.png'}
-                          alt={member.user?.fullName || 'User'}
-                          className="w-16 h-16 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
-                          onClick={() => member.user?.id && handleViewProfile(member.user.id)}
-                          title="Click để xem profile"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <h3 
-                          className="text-lg font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
-                          onClick={() => member.user?.id && handleViewProfile(member.user.id)}
-                          title="Click để xem profile"
-                        >
-                          {member.user?.fullName || 'Unknown User'}
-                        </h3>
-                        <p className="text-sm text-gray-500">{member.role || 'Thành viên'}</p>
-                        {member.joinDate && (
-                          <p className="text-xs text-gray-400">
-                            Tham gia: {formatDate(member.joinDate)}
-                          </p>
+                  <div key={member.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 flex-1">
+                        {member.user && (
+                          <UserAvatarName 
+                            user={member.user}
+                            size="lg"
+                            showPosition={false}
+                            clickable={true}
+                            layout="horizontal"
+                          />
                         )}
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            {/* Role Badge with Selector for Managers */}
+                            {isManager() ? (
+                              <div className="flex items-center space-x-2">
+                                <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRoleColor(member.role)}`}>
+                                  {React.createElement(getRoleIcon(member.role), { className: "w-3 h-3" })}
+                                  <span>{getRoleText(member.role)}</span>
+                                </span>
+                                <select
+                                  value={member.role}
+                                  onChange={(e) => handleMemberRoleChange(member.id, e.target.value as RoleDefault)}
+                                  className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent hover:border-blue-400 transition-colors"
+                                  disabled={changingRole[member.id]}
+                                  title="Thay đổi vai trò"
+                                >
+                                  <option value="MEMBER">Thành viên</option>
+                                  <option value="MANAGER">Quản lý</option>
+                                </select>
+                                {changingRole[member.id] && (
+                                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                                )}
+                              </div>
+                            ) : (
+                              <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRoleColor(member.role)}`}>
+                                {React.createElement(getRoleIcon(member.role), { className: "w-3 h-3" })}
+                                <span>{getRoleText(member.role)}</span>
+                              </span>
+                            )}
+                            
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              member.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {member.status === 'ACTIVE' ? 'Hoạt động' : 'Không hoạt động'}
+                            </span>
+                          </div>
+                          {member.joinDate && (
+                            <p className="text-xs text-gray-400">
+                              Tham gia: {formatDate(member.joinDate)}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="mt-4 flex justify-between items-center">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        member.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {member.status === 'ACTIVE' ? 'Hoạt động' : 'Không hoạt động'}
-                      </span>
                       
                       <button
                         onClick={() => member.user?.id && handleViewProfile(member.user.id)}
-                        className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                        className="text-blue-600 hover:text-blue-900 text-sm font-medium ml-4 whitespace-nowrap"
                       >
                         Xem profile
                       </button>
@@ -591,6 +693,7 @@ const ProjectDetailPage: React.FC = () => {
               targetId={projectIdNum}
               title=""
               placeholder={`Chia sẻ với team ${projectData.name}...`}
+              onViewDetail={handleViewDetail}
             />
           </div>
         )}
@@ -817,7 +920,6 @@ const ProjectDetailPage: React.FC = () => {
                   disabled={isAddingMember}
                 >
                   <option value="MEMBER">Thành viên</option>
-                  <option value="LEADER">Trưởng nhóm</option>
                   <option value="MANAGER">Quản lý</option>
                 </select>
               </div>
@@ -853,18 +955,13 @@ const ProjectDetailPage: React.FC = () => {
                               disabled={isAddingMember}
                             />
                           </div>
-                          <img
-                            src={user.avatar || '/default-avatar.png'}
-                            alt={user.fullName}
-                            className="w-10 h-10 rounded-full object-cover"
+                          <UserAvatarName 
+                            user={user}
+                            size="md"
+                            showEmail={true}
+                            clickable={false}
+                            layout="horizontal"
                           />
-                          <div>
-                            <div className="font-medium text-gray-900">{user.fullName}</div>
-                            <div className="text-sm text-gray-500">{user.email}</div>
-                            {user.department && (
-                              <div className="text-xs text-gray-400">{user.department.name}</div>
-                            )}
-                          </div>
                         </div>
                         {selectedUsers.includes(user.id) && (
                           <Check className="w-5 h-5 text-green-600" />
@@ -881,10 +978,11 @@ const ProjectDetailPage: React.FC = () => {
                   <div className="flex items-center space-x-2 mb-2">
                     <Check className="w-5 h-5 text-green-600" />
                     <span className="text-sm font-medium text-green-900">
-                      Sẽ thêm {selectedUsers.length} thành viên với vai trò: {
-                        selectedRole === 'MEMBER' ? 'Thành viên' :
-                        selectedRole === 'LEADER' ? 'Trưởng nhóm' : 'Quản lý'
-                      }
+                      Sẽ thêm {selectedUsers.length} thành viên với vai trò:
+                    </span>
+                    <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium border ${getRoleColor(selectedRole as RoleDefault)}`}>
+                      {React.createElement(getRoleIcon(selectedRole as RoleDefault), { className: "w-3 h-3" })}
+                      <span>{getRoleText(selectedRole as RoleDefault)}</span>
                     </span>
                   </div>
                   <div className="text-sm text-green-700">
@@ -924,6 +1022,18 @@ const ProjectDetailPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Content Detail Modal */}
+      {showContentModal && selectedContent && (
+        <ContentModal
+          contentId={selectedContent.id}
+          isOpen={showContentModal}
+          onClose={() => {
+            setShowContentModal(false);
+            setSelectedContent(null);
+          }}
+        />
       )}
     </div>
   );

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ReactionDisplay } from './ReactionDisplay';
+import { UserAvatar } from '../shared/UserAvatar';
+import { UserNameCard } from '../shared/UserNameCard';
 import { useContentStore } from '../../stores/content-store';
 import type { ContentResponse } from '../../types/content.ts';
 import type { FileResponse } from '../../types/file.ts';
@@ -93,28 +95,21 @@ export const CommentCard: React.FC<CommentCardProps> = ({
     return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension || '');
   };
 
-  // Get avatar gradient
-  const getAvatarGradient = (name: string) => {
-    const gradients = [
-      'from-blue-400 to-blue-600',
-      'from-green-400 to-green-600', 
-      'from-yellow-400 to-orange-500',
-      'from-pink-400 to-pink-600',
-      'from-indigo-400 to-indigo-600',
-      'from-red-400 to-red-600'
-    ];
-    const index = name.charCodeAt(0) % gradients.length;
-    return gradients[index];
-  };
+
 
   return (
     <div className={`group flex space-x-3 py-3 ${depth > 0 ? 'ml-8' : ''}`}>
-      {/* Compact Avatar */}
-      <div className="flex-shrink-0">
-        <div className={`w-8 h-8 bg-gradient-to-br ${getAvatarGradient(content.author?.fullName || 'U')} rounded-full flex items-center justify-center text-white text-sm font-medium shadow-sm`}>
-          {content.author?.fullName?.charAt(0).toUpperCase() || 'U'}
-        </div>
-      </div>
+      {/* User Avatar */}
+      <UserAvatar 
+        user={{
+          id: content.author?.id || 0,
+          fullName: content.author?.fullName || 'Unknown User',
+          avatar: content.author?.avatar
+        }}
+        size="sm"
+        clickable={!!content.author?.id}
+        className="flex-shrink-0"
+      />
 
       {/* Comment Content */}
       <div className="flex-1 min-w-0">
@@ -122,12 +117,22 @@ export const CommentCard: React.FC<CommentCardProps> = ({
         <div className="bg-gray-100 rounded-2xl px-4 py-3 relative">
           {/* Author & Content */}
           <div className="space-y-1">
-            <div className="flex items-center space-x-2">
-              <span className="font-semibold text-gray-900 text-sm hover:text-blue-600 cursor-pointer transition-colors">
-                {content.author?.fullName || 'Unknown User'}
-              </span>
-              <span className="text-xs text-gray-500">{formatDate(content.createdAt)}</span>
-            </div>
+            <UserNameCard 
+              user={{
+                id: content.author?.id || 0,
+                fullName: content.author?.fullName || 'Unknown User',
+                position: content.author?.position,
+                email: content.author?.email
+              }}
+              size="sm"
+              showTime={true}
+              time={formatDate(content.createdAt)}
+              showPosition={true}
+              clickable={!!content.author?.id}
+              variant="minimal"
+              layout="horizontal"
+              className="mb-1"
+            />
             
             <div className="text-sm text-gray-800 leading-relaxed">
               <p className="whitespace-pre-wrap">
@@ -228,21 +233,12 @@ export const CommentCard: React.FC<CommentCardProps> = ({
             />
           </div>
           
-          {onReply && (
-            <button
-              onClick={() => onReply(content.id)}
-              className="text-xs text-gray-500 hover:text-blue-600 font-medium transition-colors"
-            >
-              Trả lời
-            </button>
-          )}
-
           {onViewDetail && (
             <button
               onClick={() => onViewDetail(content.id)}
-              className="text-xs text-gray-500 hover:text-purple-600 font-medium transition-colors"
+              className="text-xs text-gray-500 hover:text-blue-600 font-medium transition-colors"
             >
-              Chi tiết
+              Bình luận
             </button>
           )}
 

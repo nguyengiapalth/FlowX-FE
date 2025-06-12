@@ -8,7 +8,7 @@ import {
   FileText, 
   Loader2, 
 } from 'lucide-react';
-import type { ContentTargetType } from '../../types/enums/enums';
+import type { ContentTargetType } from '../../types/enums.ts';
 import { formatFileSize, getFileIcon } from '../../utils/format.util';
 
 interface ExpandableCreateFormProps {

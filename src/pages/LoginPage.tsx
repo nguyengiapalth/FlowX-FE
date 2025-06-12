@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigationActions } from '../utils/navigation.utils';
 import authService from '../services/auth.service';
 import { useAuthStore } from '../stores/auth-store';
 import { useProfileStore } from '../stores/profile-store';
@@ -35,7 +35,7 @@ export const LoginPage: React.FC = () => {
     const [rememberMe, setRememberMe] = useState(false);
     const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
     
-    const navigate = useNavigate();
+    const { navigate } = useNavigationActions();
     const { setAccessToken, fetchUserRoles, isGlobalManager } = useAuthStore();
     const { fetchProfile } = useProfileStore();
     const { fetchDepartments } = useDepartmentStore();

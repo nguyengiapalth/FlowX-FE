@@ -1,23 +1,124 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { ContentResponse } from '../../types/content';
-import contentService from '../../services/content.service';
-import { 
-  MapPin, 
-  Heart, 
-  ThumbsUp, 
-  Smile, 
-  Angry, 
-  Frown, 
-  MessageCircle, 
-  Share2, 
-  MoreHorizontal, 
-  Edit, 
-  Trash2 
-} from 'lucide-react';
 import { ReactionDisplay } from './ReactionDisplay';
 import { CommentCard } from './CommentCard';
+import { UserAvatarName } from '../shared/UserAvatarName';
 import { useContentStore } from '../../stores/content-store';
+import { useProfileStore } from '../../stores/profile-store';
 import type { FileResponse } from '../../types/file.ts';
+import type { ContentCreateRequest } from '../../types/content';
+import contentService from '../../services/content.service';
+import { getSubtitleDisplay, getContentTargetDisplay } from '../../utils/content.util';
+
+// Simple inline reply form component
+const InlineReplyForm: React.FC<{
+  contentTargetType: any;
+  targetId: number;
+  parentId: number;
+  parentAuthorName?: string;
+  onSubmit: (request: ContentCreateRequest) => Promise<void>;
+  onCancel: () => void;
+}> = ({ contentTargetType, targetId, parentId, parentAuthorName, onSubmit, onCancel }) =>
+{
+  const { user } = useProfileStore();
+  const [body, setBody] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!body.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      const request: ContentCreateRequest = {
+        subtitle: 'reply',
+        body: body.trim(),
+        contentTargetType,
+        targetId,
+        parentId
+      };
+      await onSubmit(request);
+    } catch (error) {
+      console.error('Failed to create reply:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit(e as any);
+    }
+    if (e.key === 'Escape') {
+      onCancel();
+    }
+  };
+
+  return (
+    <div className="flex items-start space-x-3 mt-3 ml-11">
+      {/* Mini Avatar */}
+      <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+        {user?.avatar ? (
+          <img src={user.avatar} alt={user.fullName} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600 text-white text-xs font-bold">
+            {user?.fullName?.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </div>
+
+      {/* Reply Form */}
+      <div className="flex-1 bg-gray-50 rounded-2xl border border-gray-200">
+        <form onSubmit={handleSubmit}>
+          <textarea
+            ref={textareaRef}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={parentAuthorName ? `Trả lời ${parentAuthorName}...` : 'Viết phản hồi...'}
+            className="w-full px-4 py-3 bg-transparent border-none resize-none text-sm placeholder-gray-500 focus:outline-none rounded-2xl"
+            rows={2}
+            maxLength={500}
+          />
+          
+          {/* Action Bar */}
+          {body.trim() && (
+            <div className="flex items-center justify-between px-4 pb-3">
+              <div className="text-xs text-gray-400">
+                {body.length}/500
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="px-3 py-1 text-xs text-gray-600 hover:text-gray-800 transition-colors"
+                  disabled={isSubmitting}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !body.trim()}
+                  className="px-4 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Đang gửi...' : 'Gửi'}
+                </button>
+              </div>
+            </div>
+          )}
+        </form>
+      </div>
+    </div>
+  );
+};
 
 interface ContentCardProps {
   content: ContentResponse;
@@ -40,7 +141,8 @@ export const ContentCard: React.FC<ContentCardProps> = ({
 }) => {
   const [showFullContent, setShowFullContent] = useState(false);
   const [showAllFiles, setShowAllFiles] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [replyingToComment, setReplyingToComment] = useState<number | null>(null);
   
   // Reaction state
   const { 
@@ -48,7 +150,8 @@ export const ContentCard: React.FC<ContentCardProps> = ({
     reactionLoading, 
     fetchReactionSummary, 
     addOrUpdateReaction, 
-    removeReaction 
+    removeReaction,
+    addReplyToContent
   } = useContentStore();
   
   const reactionSummary = reactionSummaries[content.id];
@@ -63,14 +166,45 @@ export const ContentCard: React.FC<ContentCardProps> = ({
     try {
       if (reactionType) {
         await addOrUpdateReaction(content.id, reactionType);
-        setIsLiked(true);
       } else {
         await removeReaction(content.id);
-        setIsLiked(false);
       }
     } catch (error) {
       console.error('Failed to change reaction:', error);
     }
+  };
+
+  const handleReplySubmit = async (request: ContentCreateRequest) => {
+    try {
+      // Create the reply content
+      const response = await contentService.createContent(request);
+      
+      if (response.data) {
+        // Add the reply to the current content in the store
+        addReplyToContent(content.id, response.data);
+        
+        // Hide reply form
+        setShowReplyForm(false);
+        setReplyingToComment(null);
+      }
+    } catch (error) {
+      console.error('Failed to create reply:', error);
+      throw error;
+    }
+  };
+
+  const handleReplyToComment = (commentId: number) => {
+    if (onReply) {
+      onReply(commentId);
+    } else {
+      setReplyingToComment(commentId);
+      setShowReplyForm(true);
+    }
+  };
+
+  const handleCancelReply = () => {
+    setShowReplyForm(false);
+    setReplyingToComment(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -152,21 +286,38 @@ export const ContentCard: React.FC<ContentCardProps> = ({
       {/* Content Header */}
       <div className="flex items-start justify-between p-6 pb-4">
         <div className="flex items-start space-x-4">
-          {/* Avatar */}
-          <div className="relative flex-shrink-0">
-            <div className={`w-12 h-12 bg-gradient-to-br ${getAvatarGradient(content.author?.fullName || 'U')} rounded-full flex items-center justify-center text-white text-lg font-bold shadow-md ring-2 ring-white`}>
-              {content.author?.fullName?.charAt(0).toUpperCase() || 'U'}
-            </div>
-            {/* Online status indicator */}
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
-          </div>
+          {/* User Avatar and Name */}
+          <UserAvatarName 
+            user={{
+              id: content.author?.id || 0,
+              fullName: content.author?.fullName || 'Unknown User',
+              avatar: content.author?.avatar,
+              position: content.author?.position,
+              email: content.author?.email
+            }}
+            size="lg"
+            showPosition={false}
+            clickable={!!content.author?.id}
+            className="flex-shrink-0"
+          />
           
-          {/* User Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-2">
-              <h3 className="font-semibold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors">
-                {content.author?.fullName || 'Unknown User'}
-              </h3>
+          {/* Content Meta Info */}
+          <div className="flex-1 min-w-0 pt-1">
+            <div className="flex items-center space-x-2 flex-wrap">
+              {/* Subtitle (e.g., "đã thay đổi ảnh đại diện") */}
+              {getSubtitleDisplay(content.subtitle) && (
+                <span className="text-sm text-gray-600">
+                  {getSubtitleDisplay(content.subtitle)}
+                </span>
+              )}
+              
+              {/* Target Context (e.g., "> Dự án ABC") */}
+              {getContentTargetDisplay(content.contentTargetType, content.targetId) && (
+                <span className="text-xs text-blue-600 font-medium">
+                  {getContentTargetDisplay(content.contentTargetType, content.targetId)}
+                </span>
+              )}
+              
               {content.author?.position && (
                 <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
                   {content.author.position}
@@ -249,7 +400,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
               displayFiles?.filter(isImage).length === 2 ? 'grid-cols-2' :
               'grid-cols-2 md:grid-cols-3'
             }`}>
-              {displayFiles?.filter(isImage).map((file, index) => (
+              {displayFiles?.filter(isImage).map((file) => (
                 <div key={file.id} className="relative group aspect-square overflow-hidden rounded-lg">
                   <img
                     src={file.url || '/placeholder-image.jpg'}
@@ -287,7 +438,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
                   
                   <div className="flex-shrink-0">
                     <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
                   </div>
                 </div>
@@ -321,9 +472,9 @@ export const ContentCard: React.FC<ContentCardProps> = ({
               loading={isReactionLoading}
             />
             
-            {onReply && (
-              <button
-                onClick={() => onReply(content.id)}
+            {onViewDetail && (
+              <button 
+                onClick={() => onViewDetail(content.id)}
                 className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors group"
               >
                 <div className="p-2 group-hover:bg-blue-100 rounded-full transition-colors">
@@ -331,22 +482,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
                     <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <span className="text-sm font-medium">Trả lời</span>
-              </button>
-            )}
-
-            {onViewDetail && (
-              <button 
-                onClick={() => onViewDetail(content.id)}
-                className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 transition-colors group"
-              >
-                <div className="p-2 group-hover:bg-purple-100 rounded-full transition-colors">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <span className="text-sm font-medium">Xem chi tiết</span>
+                <span className="text-sm font-medium">Bình luận</span>
               </button>
             )}
 
@@ -371,19 +507,46 @@ export const ContentCard: React.FC<ContentCardProps> = ({
         </div>
       </div>
 
+      {/* Inline Reply Form for Main Content */}
+      {showReplyForm && replyingToComment === content.id && (
+        <div className="px-6 pb-4">
+          <InlineReplyForm
+            contentTargetType={content.contentTargetType}
+            targetId={content.targetId}
+            parentId={content.id}
+            parentAuthorName={content.author?.fullName}
+            onSubmit={handleReplySubmit}
+            onCancel={handleCancelReply}
+          />
+        </div>
+      )}
+
       {/* Replies */}
       {showReplies && content.replies && content.replies.length > 0 && (
         <div className="border-t border-gray-100 px-6 py-2">
           {content.replies.map((reply) => (
-                            <CommentCard
-                  key={reply.id}
-                  content={reply}
-                  onReply={onReply}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onViewDetail={onViewDetail}
-                  depth={depth + 1}
+            <div key={reply.id}>
+              <CommentCard
+                content={reply}
+                onReply={handleReplyToComment}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onViewDetail={onViewDetail}
+                depth={depth + 1}
+              />
+              
+              {/* Inline Reply Form for Individual Comments */}
+              {showReplyForm && replyingToComment === reply.id && (
+                <InlineReplyForm
+                  contentTargetType={content.contentTargetType}
+                  targetId={content.targetId}
+                  parentId={reply.id}
+                  parentAuthorName={reply.author?.fullName}
+                  onSubmit={handleReplySubmit}
+                  onCancel={handleCancelReply}
                 />
+              )}
+            </div>
           ))}
         </div>
       )}

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useTaskStore } from '../../stores/task-store.ts';
 import { useProfileStore } from '../../stores/profile-store.ts';
+import { UserAvatar } from '../shared/UserAvatar';
+import { UserNameCard } from '../shared/UserNameCard';
 import taskService from '../../services/task.service.ts';
 import TaskFileUpload from './TaskFileUpload.tsx';
 import type { TaskResponse, TaskUpdateRequest } from '../../types/task.ts';
-import type { TaskStatus, PriorityLevel } from '../../types/enums/enums.ts';
+import type { TaskStatus, PriorityLevel } from '../../types/enums.ts';
 
 interface TaskDetailProps {
   taskId: number;
@@ -21,7 +23,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
   onDelete,
   className = ''
 }) => {
-  const { currentTask, fetchTaskById, updateTask, deleteTask, updateTaskStatus, isLoading } = useTaskStore();
+  const { currentTask, fetchTaskById, updateTask, deleteTask, updateTaskStatus, syncTaskFiles, isLoading } = useTaskStore();
   const { user } = useProfileStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<TaskUpdateRequest>({});
@@ -152,8 +154,21 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
   const handleSaveEdit = async () => {
     try {
       const updatedTask = await updateTask(currentTask.id, editForm);
+      
+      // Auto-sync files after update if files might be affected
+      if (editForm.hasFiles !== undefined) {
+        try {
+          await syncTaskFiles(currentTask.id);
+        } catch (syncError) {
+          console.error('Failed to sync files after update:', syncError);
+        }
+      }
+      
       onUpdate?.(updatedTask);
       setIsEditing(false);
+      
+      // Refresh to get latest data including synced hasFiles flag
+      fetchTaskById(currentTask.id);
     } catch (error) {
       console.error('Failed to update task:', error);
     }
@@ -340,13 +355,63 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
 
             {/* Files */}
             <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-900">Files đính kèm</h3>
+                {canModify && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await syncTaskFiles(currentTask.id);
+                        // Refresh task data after sync
+                        fetchTaskById(currentTask.id);
+                      } catch (error) {
+                        console.error('Failed to sync task files:', error);
+                      }
+                    }}
+                    className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    title="Đồng bộ trạng thái files"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Sync Files
+                  </button>
+                )}
+              </div>
+
+              {/* Show hasFiles flag status */}
+              <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Trạng thái files:</span>
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    currentTask.hasFiles 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {currentTask.hasFiles ? 'Có files' : 'Không có files'}
+                  </span>
+                </div>
+                {currentTask.files && currentTask.files.length > 0 && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {currentTask.files.length} file(s) đính kèm
+                  </div>
+                )}
+              </div>
+
               <TaskFileUpload
                 taskId={currentTask.id}
                 canUpload={canModify}
                 files={currentTask.files || []}
-                onFilesUpdated={() => {
-                  // Refresh task data when files are updated
-                  fetchTaskById(currentTask.id);
+                onFilesUpdated={async () => {
+                  // Sync files after upload/delete, then refresh task data
+                  try {
+                    await syncTaskFiles(currentTask.id);
+                    fetchTaskById(currentTask.id);
+                  } catch (error) {
+                    console.error('Failed to sync after file update:', error);
+                    // Still refresh even if sync fails
+                    fetchTaskById(currentTask.id);
+                  }
                 }}
               />
             </div>
@@ -360,27 +425,33 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
               <div className="space-y-3">
                 <div className="bg-gray-50 rounded-lg p-3">
                   <div className="text-sm text-gray-500 mb-1">Người giao việc</div>
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
-                      {currentTask.assigner.fullName?.charAt(0) || 'U'}
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{currentTask.assigner.fullName}</div>
-                      <div className="text-sm text-gray-500">{currentTask.assigner.email}</div>
-                    </div>
+                  <div className="flex items-center space-x-3">
+                    <UserAvatar 
+                      user={currentTask.assigner}
+                      size="md"
+                      clickable={true}
+                    />
+                    <UserNameCard 
+                      user={currentTask.assigner}
+                      variant="minimal"
+                      showEmail={true}
+                    />
                   </div>
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-3">
                   <div className="text-sm text-gray-500 mb-1">Người thực hiện</div>
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
-                      {currentTask.assignee.fullName?.charAt(0) || 'U'}
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{currentTask.assignee.fullName}</div>
-                      <div className="text-sm text-gray-500">{currentTask.assignee.email}</div>
-                    </div>
+                  <div className="flex items-center space-x-3">
+                    <UserAvatar 
+                      user={currentTask.assignee}
+                      size="md"
+                      clickable={true}
+                    />
+                    <UserNameCard 
+                      user={currentTask.assignee}
+                      variant="minimal"
+                      showEmail={true}
+                    />
                   </div>
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import { useNavigationActions } from '../utils/navigation.utils';
 import authService from '../services/auth.service';
 import type { ResetPasswordRequest } from '../types/auth';
 import { 
@@ -19,7 +20,7 @@ interface FormErrors {
 
 export const ResetPasswordPage: React.FC = () => {
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
+    const { handleGoToLogin } = useNavigationActions();
     const token = searchParams.get('token');
 
     const [formData, setFormData] = useState({
@@ -34,9 +35,9 @@ export const ResetPasswordPage: React.FC = () => {
 
     useEffect(() => {
         if (!token) {
-            navigate('/login', { replace: true });
+            handleGoToLogin();
         }
-    }, [token, navigate]);
+    }, [token, handleGoToLogin]);
 
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {};
@@ -105,7 +106,7 @@ export const ResetPasswordPage: React.FC = () => {
     };
 
     const handleBackToLogin = () => {
-        navigate('/login', { replace: true });
+        handleGoToLogin();
     };
 
     if (!token) return null;

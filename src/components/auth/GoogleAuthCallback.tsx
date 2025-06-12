@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth.service';
 import { useAuthStore } from '../../stores/auth-store';
 import { useProfileStore } from '../../stores/profile-store';
 import { useDepartmentStore } from '../../stores/department-store';
 import { useProjectStore } from '../../stores/project-store';
+import { useNavigationActions } from '../../utils/navigation.utils';
 
 export const GoogleAuthCallback: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const { navigate, handleGoToLogin } = useNavigationActions();
   const { setAccessToken, fetchUserRoles, isGlobalManager } = useAuthStore();
   const { fetchProfile } = useProfileStore();
   const { fetchDepartments } = useDepartmentStore();
@@ -63,7 +63,7 @@ export const GoogleAuthCallback: React.FC = () => {
         
         // Redirect to login page after a delay
         setTimeout(() => {
-          navigate('/login', { replace: true });
+          handleGoToLogin();
         }, 3000);
       }
     };

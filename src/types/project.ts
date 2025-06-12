@@ -1,4 +1,4 @@
-import type {MemberStatus, PriorityLevel, ProjectStatus, RoleDefault} from './enums/enums.ts';
+import type {MemberStatus, PriorityLevel, ProjectStatus, RoleDefault} from './enums.ts';
 import type {DepartmentResponse} from './department';
 import type {UserResponse} from './user';
 

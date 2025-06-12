@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../stores/auth-store.ts';
+import { useNavigationActions } from '../../utils/navigation.utils';
+import { useAuthStore } from '../../stores/auth-store';
 import {AlertTriangle} from "lucide-react";
 
 interface LogoutButtonProps {
@@ -17,7 +17,7 @@ export const LogoutButton: React.FC<LogoutButtonProps> = ({
   className = ''
 }) => {
   const [showModal, setShowModal] = useState(false);
-  const navigate = useNavigate();
+  const { handleGoToLogin } = useNavigationActions();
   const { logout } = useAuthStore();
 
   const handleLogout = () => {
@@ -31,7 +31,7 @@ export const LogoutButton: React.FC<LogoutButtonProps> = ({
   const performLogout = () => {
     logout();
     setShowModal(false);
-    navigate('/login', { replace: true });
+    handleGoToLogin();
   };
 
   const cancelLogout = () => {

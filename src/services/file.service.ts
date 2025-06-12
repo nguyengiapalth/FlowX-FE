@@ -6,7 +6,7 @@ import type {
     PresignedUploadResponse,
     BatchDeleteRequest
 } from '../types/file';
-import type { FileTargetType } from '../types/enums/enums';
+import type { FileTargetType } from '../types/enums.ts';
 
 class FileService {
     /**

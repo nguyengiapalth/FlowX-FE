@@ -5,7 +5,7 @@ import type {
     ProjectCreateRequest, 
     ProjectUpdateRequest 
 } from '../types/project';
-import type { ProjectStatus } from '../types/enums/enums';
+import type { ProjectStatus } from '../types/enums.ts';
 
 class ProjectService {
     /**

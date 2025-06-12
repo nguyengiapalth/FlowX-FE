@@ -8,6 +8,7 @@ import type {
     ForgotPasswordRequest,
     ResetPasswordRequest,
 } from '../types/auth';
+import {useAuthStore} from "../stores/auth-store.ts";
 
 class AuthService {
     /**
@@ -35,7 +36,11 @@ class AuthService {
     /**
      * Logout current user
      */
-    async logout(request: LogoutRequest): Promise<FlowXResponse<void>> {
+    async logout(): Promise<FlowXResponse<void>> {
+        const accessToken = useAuthStore.getState().accessToken;
+        const request: LogoutRequest = {
+            token: accessToken || ''
+        }
         const response = await apiService.instance.post<FlowXResponse<void>>(
             '/api/authentication/logout',
             request

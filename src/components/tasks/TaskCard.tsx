@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useProfileStore } from '../../stores/profile-store.ts';
+import { useNavigationActions } from '../../utils/navigation.utils';
 import taskService from '../../services/task.service.ts';
 import type { TaskResponse } from '../../types/task.ts';
-import type { TaskStatus } from '../../types/enums/enums.ts';
+import type { TaskStatus } from '../../types/enums.ts';
 import {
   Calendar, 
   User, 
@@ -24,7 +24,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   showProject = true,
   showDepartment = false
 }) => {
-  const navigate = useNavigate();
+  const { handleTaskClick } = useNavigationActions();
   const { user } = useProfileStore();
   const [loading, setLoading] = useState(false);
 
@@ -104,7 +104,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   };
 
   const handleClickDetail = () => {
-    navigate(`/tasks/${task.id}`);
+    handleTaskClick(task.id);
   };
 
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED';

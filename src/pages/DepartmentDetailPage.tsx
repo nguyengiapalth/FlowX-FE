@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, Navigate, useNavigate } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { useProfileStore } from '../stores/profile-store';
+import { useNavigationActions } from '../utils/navigation.utils';
 import { 
   LayoutDashboard, 
   ChevronRight, 
@@ -18,21 +19,22 @@ import TaskSection from '../components/tasks/TaskSection.tsx';
 import { ExpandableCreateForm } from '../index.ts';
 import SimpleToast from '../components/utils/SimpleToast';
 import { BackgroundModal } from '../components/shared/BackgroundModal';
+import { ContentModal } from '../components/content/ContentModal';
 import departmentService from '../services/department.service';
 import userService from '../services/user.service';
 import projectService from '../services/project.service';
-import contentService from "../services/content.service.ts";
 import fileService from '../services/file.service';
 import type { DepartmentResponse } from '../types/department';
 import type { UserResponse } from '../types/user';
 import type { ProjectResponse } from '../types/project';
-import type { ContentCreateRequest } from '../types/content';
+import type { ContentCreateRequest, ContentResponse } from '../types/content';
 import type { FileCreateRequest } from '../types/file';
+import { ProjectCreateModal } from '../components/shared/ProjectCreateModal';
 import { formatDate } from '../utils/format.util.ts';
 
 const DepartmentDetailPage: React.FC = () => {
   const { departmentId } = useParams<{ departmentId: string }>();
-  const navigate = useNavigate();
+  const { navigate } = useNavigationActions();
   const { user } = useProfileStore();
   const { canAccessDepartment, isDepartmentManager, isGlobalManager } = useAuthStore();
   const { createContent, syncContentFiles } = useContentStore();
@@ -48,6 +50,10 @@ const DepartmentDetailPage: React.FC = () => {
   
   // Background update states
   const [showBackgroundModal, setShowBackgroundModal] = useState(false);
+  
+  // Content detail modal states
+  const [selectedContent, setSelectedContent] = useState<ContentResponse | null>(null);
+  const [showContentModal, setShowContentModal] = useState(false);
 
   // Edit mode states for about section
   const [isEditingInfo, setIsEditingInfo] = useState(false);
@@ -65,13 +71,6 @@ const DepartmentDetailPage: React.FC = () => {
 
   // Create project modal states
   const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
-  const [isCreatingProject, setIsCreatingProject] = useState(false);
-  const [projectFormData, setProjectFormData] = useState({
-    name: '',
-    description: '',
-    startDate: '',
-    endDate: ''
-  });
 
   // Check access permission
   const departmentIdNum = parseInt(departmentId || '1');
@@ -87,6 +86,14 @@ const DepartmentDetailPage: React.FC = () => {
       navigate('/profile');
     } else {
       navigate(`/user/${userId}`);
+    }
+  };
+
+  // Handle view content detail
+  const handleViewDetail = (_contentId: number, content?: ContentResponse) => {
+    if (content) {
+      setSelectedContent(content);
+      setShowContentModal(true);
     }
   };
 
@@ -270,61 +277,24 @@ const DepartmentDetailPage: React.FC = () => {
   };
 
   // Handle create project
-  const handleCreateProject = async () => {
-    if (!departmentData || !projectFormData.name.trim()) {
-      setToast({ message: 'Vui lòng nhập tên dự án', type: 'error' });
-      return;
-    }
-
-    setIsCreatingProject(true);
-    try {
-      const projectRequest = {
-        name: projectFormData.name.trim(),
-        description: projectFormData.description.trim() || undefined,
-        departmentId: departmentData.id,
-        createdById: user?.id || 0,
-        startDate: projectFormData.startDate || undefined,
-        endDate: projectFormData.endDate || undefined
-      };
-
-      const response = await projectService.createProject(projectRequest);
-      
-      if (response.code === 200 || response.code === 201) {
-        // Refresh projects list
-        const projectsResponse = await projectService.getProjectsByDepartmentId(departmentIdNum);
-        if (projectsResponse.data) {
-          setProjects(projectsResponse.data);
-        }
-
-        // Reset form and close modal
-        setProjectFormData({
-          name: '',
-          description: '',
-          startDate: '',
-          endDate: ''
-        });
-        setShowCreateProjectModal(false);
-        
-        setToast({ message: 'Tạo dự án thành công!', type: 'success' });
-      } else {
-        throw new Error(response.message || 'Không thể tạo dự án');
-      }
-    } catch (error: any) {
-      console.error('Failed to create project:', error);
-      setToast({ message: error.message || 'Không thể tạo dự án. Vui lòng thử lại.', type: 'error' });
-    } finally {
-      setIsCreatingProject(false);
-    }
+  const handleProjectCreateSuccess = (message: string) => {
+    setToast({ message, type: 'success' });
+    loadProjectsData();
   };
 
-  const resetCreateProjectModal = () => {
-    setProjectFormData({
-      name: '',
-      description: '',
-      startDate: '',
-      endDate: ''
-    });
-    setShowCreateProjectModal(false);
+  const handleProjectCreateError = (message: string) => {
+    setToast({ message, type: 'error' });
+  };
+
+  const loadProjectsData = async () => {
+    try {
+      const projectsResponse = await projectService.getProjectsByDepartmentId(departmentIdNum);
+      if (projectsResponse.data) {
+        setProjects(projectsResponse.data);
+      }
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+    }
   };
 
   const uploadContentFiles = async (contentId: number, files: File[]) => {
@@ -547,44 +517,47 @@ const DepartmentDetailPage: React.FC = () => {
                 <p className="text-gray-500">Chưa có thành viên nào trong phòng ban này</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-3">
                 {members.map((member) => (
-                  <div key={member.id} className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-center space-x-4">
-                      <div className="relative">
-                        <img
-                          src={member.avatar || '/default-avatar.png'}
-                          alt={member.fullName}
-                          className="w-16 h-16 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
-                          onClick={() => handleViewProfile(member.id)}
-                          title="Click để xem profile"
-                        />
+                  <div key={member.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 flex-1">
+                        <div className="relative">
+                          <img
+                            src={member.avatar || '/default-avatar.png'}
+                            alt={member.fullName}
+                            className="w-12 h-12 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+                            onClick={() => handleViewProfile(member.id)}
+                            title="Click để xem profile"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3">
+                            <h3 
+                              className="text-lg font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                              onClick={() => handleViewProfile(member.id)}
+                              title="Click để xem profile"
+                            >
+                              {member.fullName}
+                            </h3>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Thành viên
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-4 mt-1">
+                            <p className="text-sm text-gray-500">{member.position || 'Chưa có chức vụ'}</p>
+                            {member.joinDate && (
+                              <p className="text-xs text-gray-400">
+                                Tham gia: {formatDate(member.joinDate)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h3 
-                          className="text-lg font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
-                          onClick={() => handleViewProfile(member.id)}
-                          title="Click để xem profile"
-                        >
-                          {member.fullName}
-                        </h3>
-                        <p className="text-sm text-gray-500">{member.position || 'Chưa có chức vụ'}</p>
-                        {member.joinDate && (
-                          <p className="text-xs text-gray-400">
-                            Tham gia: {formatDate(member.joinDate)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 flex justify-between items-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Thành viên
-                      </span>
                       
                       <button
                         onClick={() => handleViewProfile(member.id)}
-                        className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                        className="text-blue-600 hover:text-blue-900 text-sm font-medium ml-4 whitespace-nowrap"
                       >
                         Xem profile
                       </button>
@@ -631,35 +604,45 @@ const DepartmentDetailPage: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-3">
                 {projects.map((project) => (
                   <Link
                     key={project.id}
                     to={`/project/${project.id}`}
-                    className="block bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    className="block bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-lg font-medium text-gray-900">{project.name}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        project.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
-                        project.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {project.status === 'IN_PROGRESS' ? 'Đang thực hiện' :
-                         project.status === 'COMPLETED' ? 'Hoàn thành' : 
-                         project.status}
-                      </span>
-                    </div>
-                    
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">{project.description}</p>
-                    
-                    <div className="text-xs text-gray-500">
-                      {project.startDate && (
-                        <p>Bắt đầu: {formatDate(project.startDate)}</p>
-                      )}
-                      {project.endDate && (
-                        <p>Kết thúc: {formatDate(project.endDate)}</p>
-                      )}
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="text-lg font-medium text-gray-900">{project.name}</h3>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            project.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
+                            project.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {project.status === 'IN_PROGRESS' ? 'Đang thực hiện' :
+                             project.status === 'COMPLETED' ? 'Hoàn thành' : 
+                             project.status}
+                          </span>
+                        </div>
+                        
+                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{project.description}</p>
+                        
+                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                          {project.startDate && (
+                            <span>Bắt đầu: {formatDate(project.startDate)}</span>
+                          )}
+                          {project.endDate && (
+                            <span>Kết thúc: {formatDate(project.endDate)}</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="ml-4">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
                     </div>
                   </Link>
                 ))}
@@ -697,6 +680,7 @@ const DepartmentDetailPage: React.FC = () => {
               targetId={departmentIdNum}
               title=""
               placeholder={`Chia sẻ với thành viên ${departmentData.name}...`}
+              onViewDetail={handleViewDetail}
             />
           </div>
         )}
@@ -902,119 +886,25 @@ const DepartmentDetailPage: React.FC = () => {
       />
 
       {/* Create Project Modal */}
-      {showCreateProjectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-0 max-w-lg w-full mx-4 max-h-[90vh] overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-900">Tạo dự án mới</h3>
-              <button
-                onClick={resetCreateProjectModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-                disabled={isCreatingProject}
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+      <ProjectCreateModal
+        isOpen={showCreateProjectModal}
+        onClose={() => setShowCreateProjectModal(false)}
+        onSuccess={handleProjectCreateSuccess}
+        onError={handleProjectCreateError}
+        defaultDepartmentId={departmentData.id}
+        defaultDepartmentName={departmentData.name}
+      />
 
-            {/* Content */}
-            <div className="p-6 space-y-6">
-              {/* Department Info */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center space-x-2">
-                  <Building className="w-5 h-5 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-900">
-                    Tạo dự án cho phòng ban: <span className="font-semibold">{departmentData.name}</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Project Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tên dự án <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={projectFormData.name}
-                  onChange={(e) => setProjectFormData({ ...projectFormData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Nhập tên dự án"
-                  disabled={isCreatingProject}
-                />
-              </div>
-
-              {/* Project Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mô tả dự án
-                </label>
-                <textarea
-                  value={projectFormData.description}
-                  onChange={(e) => setProjectFormData({ ...projectFormData, description: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Nhập mô tả dự án"
-                  disabled={isCreatingProject}
-                />
-              </div>
-
-              {/* Date Range */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ngày bắt đầu
-                  </label>
-                  <input
-                    type="date"
-                    value={projectFormData.startDate}
-                    onChange={(e) => setProjectFormData({ ...projectFormData, startDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    disabled={isCreatingProject}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ngày kết thúc
-                  </label>
-                  <input
-                    type="date"
-                    value={projectFormData.endDate}
-                    onChange={(e) => setProjectFormData({ ...projectFormData, endDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    disabled={isCreatingProject}
-                    min={projectFormData.startDate || undefined}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex space-x-3 p-6 bg-gray-50 border-t border-gray-200">
-              <button
-                onClick={resetCreateProjectModal}
-                className="flex-1 bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-                disabled={isCreatingProject}
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleCreateProject}
-                disabled={isCreatingProject || !projectFormData.name.trim()}
-                className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
-              >
-                {isCreatingProject ? (
-                  <div className="flex items-center justify-center">
-                    <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" />
-                    Đang tạo...
-                  </div>
-                ) : (
-                  'Tạo dự án'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Content Detail Modal */}
+      {showContentModal && selectedContent && (
+        <ContentModal
+          contentId={selectedContent.id}
+          isOpen={showContentModal}
+          onClose={() => {
+            setShowContentModal(false);
+            setSelectedContent(null);
+          }}
+        />
       )}
     </div>
   );

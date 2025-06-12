@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTaskStore } from '../stores/task-store';
 import { useAuthStore } from '../stores/auth-store';
+import { useNavigationActions } from '../utils/navigation.utils';
 import TaskDetail from '../components/tasks/TaskDetail';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 
 const TaskDetailPage: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
-  const navigate = useNavigate();
+  const { navigate } = useNavigationActions();
   const { currentTask, isLoading, error, fetchTaskById } = useTaskStore();
-  const { currentUser } = useAuthStore();
+  // const { user } = useAuthStore();
 
   useEffect(() => {
     if (taskId) {

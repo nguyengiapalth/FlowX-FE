@@ -5,7 +5,7 @@ import type {
     UserCreateRequest, 
     UserUpdateRequest,
 } from '../types/user';
-import type { UserStatus } from '../types/enums/enums';
+import type { UserStatus } from '../types/enums.ts';
 
 class UserService {
     /**

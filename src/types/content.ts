@@ -1,4 +1,4 @@
-import type {ContentTargetType} from './enums/enums.ts';
+import type {ContentTargetType} from './enums.ts';
 import type {FileResponse} from './file';
 import type {UserResponse} from './user';
 

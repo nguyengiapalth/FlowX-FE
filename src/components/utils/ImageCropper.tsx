@@ -1,8 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 
-import { 
-  X 
-} from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface ImageCropperProps {
   imageFile: File;

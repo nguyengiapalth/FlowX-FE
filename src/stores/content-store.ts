@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ContentResponse, ContentCreateRequest, ContentUpdateRequest, ContentReactionSummary } from '../types/content';
 import { normalizeReactionCounts } from '../types/content';
-import type { ContentTargetType } from '../types/enums/enums';
+import type { ContentTargetType } from '../types/enums.ts';
 import { useAuthStore } from './auth-store';
 import contentService from '../services/content.service';
 import contentReactionService from '../services/contentReaction.service';
@@ -26,9 +26,11 @@ interface ContentState {
     
     // Data fetching
     fetchAllContents: () => Promise<void>;
+    fetchAllContentsFromAllSources: () => Promise<void>;
     fetchContentById: (id: number) => Promise<void>;
     fetchContentsByTarget: (contentTargetType: ContentTargetType, targetId: number) => Promise<void>;
     fetchContentsByParent: (parentId: number) => Promise<void>;
+    fetchContentsByUser: (userId: number) => Promise<void>;
     
     // CRUD operations
     createContent: (request: ContentCreateRequest) => Promise<ContentResponse>;
@@ -110,6 +112,31 @@ export const useContentStore = create<ContentState>()(
                 }
             },
 
+            fetchAllContentsFromAllSources: async () => {
+                const { accessToken } = useAuthStore.getState();
+                if (!accessToken) {
+                    set({ error: 'No access token' });
+                    return;
+                }
+
+                try {
+                    set({ isLoading: true, error: null });
+                    
+                    // Fetch all contents from all sources using the getAllContents endpoint
+                    const response = await contentService.getAllContents();
+                    
+                    if (response.code === 200 && response.data) {
+                        const processedContents = get().processContentsWithReplies(response.data);
+                        set({ contents: processedContents, isLoading: false });
+                    } else {
+                        set({ contents: [], isLoading: false });
+                    }
+                } catch (error: any) {
+                    const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch all contents';
+                    set({ error: errorMessage, isLoading: false, contents: [] });
+                }
+            },
+
             fetchContentById: async (id: number) => {
                 const { accessToken } = useAuthStore.getState();
                 if (!accessToken) {
@@ -178,7 +205,30 @@ export const useContentStore = create<ContentState>()(
                 }
             },
 
-            // CRUD operations
+            fetchContentsByUser: async (userId: number) => {
+                const { accessToken } = useAuthStore.getState();
+                if (!accessToken) {
+                    set({ error: 'No access token' });
+                    return;
+                }
+
+                try {
+                    set({ isLoading: true, error: null });
+                    
+                    const response = await contentService.getContentsByUser(userId);
+                    
+                    if (response.code === 200 && response.data) {
+                        const processedContents = get().processContentsWithReplies(response.data);
+                        set({ contents: processedContents, isLoading: false });
+                    } else {
+                        set({ contents: [], isLoading: false });
+                    }
+                } catch (error: any) {
+                    const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch user contents';
+                    set({ error: errorMessage, isLoading: false, contents: [] });
+                }
+            },
+
             createContent: async (request: ContentCreateRequest) => {
                 const { accessToken } = useAuthStore.getState();
                 if (!accessToken) {

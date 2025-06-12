@@ -1,4 +1,4 @@
-import type {ContentTargetType, TaskStatus, PriorityLevel} from './enums/enums.ts';
+import type {ContentTargetType, TaskStatus, PriorityLevel} from './enums.ts';
 import type {UserResponse} from './user';
 import type {FileResponse} from './file';
 

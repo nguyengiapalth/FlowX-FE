@@ -1,4 +1,4 @@
-import type {FileTargetType, FileVisibility, FileStatus} from './enums/enums.ts';
+import type {FileTargetType, FileVisibility, FileStatus} from './enums.ts';
 import type {UserResponse} from './user';
 
 export interface FileResponse {

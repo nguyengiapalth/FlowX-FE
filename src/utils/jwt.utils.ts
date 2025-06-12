@@ -15,7 +15,7 @@ export interface JWTPayload {
  */
 export const decodeJWTPayload = (token: string): JWTPayload | null => {
   try {
-    if (!token || typeof token !== 'string') {
+    if (!token) {
       return null;
     }
 
