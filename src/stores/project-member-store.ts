@@ -4,7 +4,6 @@ import projectMemberService from '../services/project-member.service';
 import type { 
     ProjectMemberResponse, 
     ProjectMemberCreateRequest, 
-    ProjectMemberUpdateRequest 
 } from '../types/project';
 import type { MemberStatus, RoleDefault } from '../types/enums';
 import { useAuthStore } from './auth-store';

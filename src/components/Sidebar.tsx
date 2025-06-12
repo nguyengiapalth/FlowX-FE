@@ -18,7 +18,7 @@ import {
 
 export const Sidebar: React.FC = () => {
   const { user } = useProfileStore();
-  const {isGlobalManager } = useAuthStore();
+  const {isGlobalManager, isDepartmentManager } = useAuthStore();
   const [showAllProjects, setShowAllProjects] = useState(false);
 
   // project from store
@@ -30,12 +30,13 @@ export const Sidebar: React.FC = () => {
 
   // Filter projects based on access permissions
   const projects = allProjects.filter(project => {
-    const userDepartmentId = user?.department?.id;
-    
     // Global managers can see all projects
-    if (isGlobalManager()) {
-      return true;
-    }
+    if (isGlobalManager()) return true;
+
+    const userDepartmentId = user?.department?.id;
+
+    if (isDepartmentManager(userDepartmentId)) return true;
+
     
     // Department managers can see all projects in their department
     // if (userDepartmentId && canAccessAllProjectsInDepartment(project.de, userDepartmentId)) {
@@ -50,14 +51,14 @@ export const Sidebar: React.FC = () => {
   const displayedProjects = showAllProjects ? projects : projects.slice(0, 5);
 
   return (
-    <div className="h-[calc(100vh-7rem)] w-full bg-white rounded-xl shadow-lg border border-gray-200 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+    <div className="h-[calc(100vh-20rem)] w-full bg-white rounded-xl shadow-lg border border-gray-200 overflow-y-auto sidebar-scroll card-primary">
       <div className="p-4 space-y-2">
         {/* Profile Section */}
         <Link
           to="/profile"
           className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
         >
-          <div className="w-9 h-9 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center">
+          <div className="w-9 h-9 gradient-primary rounded-full flex items-center justify-center">
             {userAvatar ? (
               <img src={userAvatar} alt={userName} className="w-9 h-9 rounded-full object-cover" />
             ) : (
@@ -76,8 +77,8 @@ export const Sidebar: React.FC = () => {
               to="/departments"
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
             >
-              <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-blue-600" />
+              <div className="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-primary-600" />
               </div>
               <span className="text-gray-700">Phòng ban</span>
             </Link>
@@ -85,8 +86,8 @@ export const Sidebar: React.FC = () => {
               to="/users"
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
             >
-              <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center">
-                <Users className="w-5 h-5 text-purple-600" />
+              <div className="w-9 h-9 bg-secondary-100 rounded-full flex items-center justify-center">
+                <Users className="w-5 h-5 text-secondary-600" />
               </div>
               <span className="text-gray-700">Nhân sự</span>
             </Link>
@@ -98,8 +99,8 @@ export const Sidebar: React.FC = () => {
           to="/newsfeed"
           className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
         >
-          <div className="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center">
-            <Newspaper className="w-5 h-5 text-green-600" />
+          <div className="w-9 h-9 bg-secondary-100 rounded-full flex items-center justify-center">
+            <Newspaper className="w-5 h-5 text-secondary-600" />
           </div>
           <span className="text-gray-700">Newsfeed</span>
         </Link>
@@ -108,8 +109,8 @@ export const Sidebar: React.FC = () => {
           to="/tasks"
           className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
         >
-          <div className="w-9 h-9 bg-orange-100 rounded-full flex items-center justify-center">
-            <CalendarCheck className="w-5 h-5 text-orange-600" />
+          <div className="w-9 h-9 bg-accent-100 rounded-full flex items-center justify-center">
+            <CalendarCheck className="w-5 h-5 text-accent-600" />
           </div>
           <span className="text-gray-700">Task</span>
         </Link>
@@ -120,8 +121,8 @@ export const Sidebar: React.FC = () => {
             to={`/department/${user.department.id}`}
             className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
           >
-            <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-indigo-600" />
+            <div className="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-primary-600" />
             </div>
             <div className="flex flex-col">
               <span className="text-gray-700 text-sm">{user.department.name}</span>
@@ -154,7 +155,7 @@ export const Sidebar: React.FC = () => {
               to={`/project/${project.id}`}
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
             >
-              <div className={`w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center`}>
+              <div className={`w-9 h-9 rounded-lg gradient-primary flex items-center justify-center`}>
                 <span className="text-white text-xs font-bold">
                   {project.name.split(' ').map(word => word.charAt(0)).join('').substring(0, 2)}
                 </span>
@@ -180,8 +181,8 @@ export const Sidebar: React.FC = () => {
             to="/projects"
             className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 w-full text-center"
           >
-            <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center">
-              <LayoutGrid className="w-4 h-4 text-blue-600" />
+            <div className="w-9 h-9 bg-primary-100 rounded-lg flex items-center justify-center">
+              <LayoutGrid className="w-4 h-4 text-primary-600" />
             </div>
             <span className="text-gray-600 text-sm">Tất cả dự án</span>
           </Link>
@@ -199,8 +200,8 @@ export const Sidebar: React.FC = () => {
               to="/reports"
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
             >
-              <div className="w-9 h-9 bg-yellow-100 rounded-full flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-yellow-600" />
+              <div className="w-9 h-9 bg-accent-100 rounded-full flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-accent-600" />
               </div>
               <span className="text-gray-700">Báo cáo</span>
             </Link>
@@ -209,8 +210,8 @@ export const Sidebar: React.FC = () => {
               to="/analytics"
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
             >
-              <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center">
-                <PieChart className="w-5 h-5 text-purple-600" />
+              <div className="w-9 h-9 bg-secondary-100 rounded-full flex items-center justify-center">
+                <PieChart className="w-5 h-5 text-secondary-600" />
               </div>
               <span className="text-gray-700">Phân tích</span>
             </Link>

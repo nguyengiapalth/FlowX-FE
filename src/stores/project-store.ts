@@ -2,27 +2,16 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useAuthStore } from './auth-store';
 import projectService from "../services/project.service.ts";
-
-interface Project {
-    id: number;
-    name: string;
-    description?: string;
-    status: string;
-    progress?: number;
-    startDate?: string;
-    endDate?: string;
-    createdAt: string;
-    updatedAt: string;
-}
+import type {ProjectResponse} from "../types/project.ts";
 
 interface ProjectState {
     // State
-    myProjects: Project[];
+    myProjects: ProjectResponse[];
     isLoading: boolean;
     error: string | null;
     
     // Actions
-    setMyProjects: (projects: Project[]) => void;
+    setMyProjects: (projects: ProjectResponse[]) => void;
     setLoading: (loading: boolean) => void;
     setError: (error: string | null) => void;
     
@@ -63,7 +52,7 @@ export const useProjectStore = create<ProjectState>()(
                 try {
                     set({ isLoading: true, error: null });
 
-                    const response = await projectService.getMyProjects();
+                    const response = await projectService.getAllProjects();
                     
                     if (response.data) {
                         set({ myProjects: response.data, isLoading: false });

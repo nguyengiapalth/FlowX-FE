@@ -57,8 +57,3 @@ export interface ProjectMemberCreateRequest {
     role: RoleDefault;
     status?: MemberStatus;
 }
-
-export interface ProjectMemberUpdateRequest {
-    role?: RoleDefault;
-    status?: MemberStatus;
-}

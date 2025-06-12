@@ -6,6 +6,7 @@ import { isJWTExpired, isValidJWTFormat } from '../utils/jwt.utils';
 import { hasRefreshToken } from '../utils/cookie.utils';
 import userRoleService from "../services/user-role.service.ts";
 import authService from "../services/auth.service.ts";
+import {useProjectStore} from "./project-store.ts";
 
 
 interface AuthState {
@@ -23,9 +24,9 @@ interface AuthState {
     
     // Role helpers
     hasRole: (role: string) => boolean;
-    isManager: () => boolean;
     isGlobalManager: () => boolean;
     isDepartmentManager: (departmentId?: number) => boolean;
+    isProjectManager: (projectId?: number) => boolean;
     canAccessDepartment: (departmentId: number, userDepartmentId?: number) => boolean;
     canAccessAllProjectsInDepartment: (departmentId: number, userDepartmentId?: number) => boolean;
     
@@ -81,10 +82,6 @@ export const useAuthStore = create<AuthState>()(
                 );
             },
 
-            isManager: () => {
-                return get().hasRole('manager') || get().hasRole('admin') || get().hasRole('lead');
-            },
-
             isGlobalManager: () => {
                 const userRoles = get().userRoles;
                 return userRoles.some(userRole => 
@@ -103,14 +100,22 @@ export const useAuthStore = create<AuthState>()(
                 );
             },
 
-            canAccessDepartment: (departmentId: number, userDepartmentId?: number) => {
-                // Global managers can access all departments
+            isProjectManager: (projectId?: number) => {
                 if (get().isGlobalManager()) return true;
 
-                // Department managers can access their own department
-                if (get().isDepartmentManager(departmentId)) return true;
+                const project = useProjectStore.getState().myProjects.find(p => p.id === projectId);
+                if (project?.department.id) return get().isDepartmentManager(project.department.id);
+                const userRoles = get().userRoles;
+                return userRoles.some(userRole =>
+                    userRole.role.name.toLowerCase().includes('manager') &&
+                    userRole.scope === 'PROJECT' &&
+                    (!projectId || userRole.scopeId === projectId)
+                );
+            },
 
-                // Regular users can only access their own department
+            canAccessDepartment: (departmentId: number, userDepartmentId?: number) => {
+                if (get().isGlobalManager()) return true;
+                // if (get().isDepartmentManager(departmentId)) return true;
                 return userDepartmentId === departmentId;
             },
 

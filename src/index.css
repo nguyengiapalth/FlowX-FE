@@ -21,7 +21,7 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-color: #f8fafc;
+  background: linear-gradient(135deg, #eff6ff 0%, #faf5ff 50%, #fdf2f8 100%);
   color: #1e293b;
   font-family: 'Inter', system-ui, sans-serif;
 }
@@ -138,6 +138,101 @@ body {
 
 /* Focus styles */
 .focus-ring:focus {
-  outline: 2px solid #0ea5e9;
+  outline: 2px solid #3B82F6;
   outline-offset: 2px;
+}
+
+/* FlowX Theme Gradients */
+.gradient-primary {
+  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
+}
+
+.gradient-primary-soft {
+  background: linear-gradient(135deg, #eff6ff 0%, #faf5ff 50%, #fdf2f8 100%);
+}
+
+.gradient-primary-text {
+  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-hover {
+  background: linear-gradient(135deg, #60a5fa 0%, #c084fc 50%, #f472b6 100%);
+}
+
+.border-gradient {
+  border: 2px solid transparent;
+  background: linear-gradient(white, white) padding-box, 
+              linear-gradient(135deg, #3B82F6, #8B5CF6, #EC4899) border-box;
+}
+
+/* Card styles with gradient accents */
+.card-primary {
+  background: white;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(59, 130, 246, 0.1), 0 1px 2px 0 rgba(139, 92, 246, 0.06);
+}
+
+.card-primary:hover {
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(139, 92, 246, 0.06);
+}
+
+/* Button gradient styles */
+.btn-gradient {
+  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #db2777 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-gradient-outline {
+  background: white;
+  color: #3B82F6;
+  border: 2px solid transparent;
+  background: linear-gradient(white, white) padding-box, 
+              linear-gradient(135deg, #3B82F6, #8B5CF6, #EC4899) border-box;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient-outline:hover {
+  background: linear-gradient(135deg, #eff6ff 0%, #faf5ff 50%, #fdf2f8 100%) padding-box,
+              linear-gradient(135deg, #3B82F6, #8B5CF6, #EC4899) border-box;
+}
+
+/* Fixed Layout Styles */
+.fixed-layout {
+  padding-top: 4rem; /* Account for fixed navbar height */
+}
+
+@media (max-width: 768px) {
+  .fixed-layout {
+    padding-top: 4rem; /* Navbar height on mobile */
+  }
+}
+
+/* Improved scrollbar for sidebar */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 3px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  border-radius: 3px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
 }

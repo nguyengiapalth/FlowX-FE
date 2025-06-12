@@ -234,7 +234,7 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
     formData.membersWithRoles.find(m => m.userId === userId);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl p-0 max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">

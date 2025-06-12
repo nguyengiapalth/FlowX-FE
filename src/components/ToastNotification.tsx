@@ -127,8 +127,8 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, onClick }) => {
       <div className="flex items-start space-x-3">
         {/* Icon */}
         <div className="flex-shrink-0">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <Bell className="w-4 h-4 text-blue-600" />
+          <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+            <Bell className="w-4 h-4 text-primary-600" />
           </div>
         </div>
 
@@ -162,7 +162,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, onClick }) => {
       {/* Progress bar */}
       <div className="mt-3 h-1 bg-gray-200 rounded-full overflow-hidden">
         <div 
-          className="h-full bg-blue-500 rounded-full transition-all ease-linear"
+                        className="h-full gradient-primary rounded-full transition-all ease-linear"
           style={{ 
             width: '100%',
             animation: 'toast-progress 5s linear forwards',

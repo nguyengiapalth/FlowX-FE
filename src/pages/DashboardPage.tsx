@@ -19,7 +19,6 @@ import {
   Plus, 
   CalendarCheck, 
   FolderOpen,
-  ClipboardList
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -31,23 +30,20 @@ export const DashboardPage: React.FC = () => {
     handleViewAllActivities,
     handleProjectClick
   } = useNavigationActions();
-  const { isManager, isGlobalManager, userRoles } = useAuthStore();
+  const { isGlobalManager, userRoles } = useAuthStore();
   const { user } = useProfileStore();
   const { departments, fetchDepartments } = useDepartmentStore();
   const { myProjects, fetchMyProjects } = useProjectStore();
   const { createContent, syncContentFiles, contents, fetchAllContents } = useContentStore();
-  const { myAssignedTasks, fetchMyAssignedTasks } = useTaskStore();
+  const { fetchMyAssignedTasks } = useTaskStore();
   
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
-    // Fetch all necessary data when component mounts
     fetchMyProjects();
     fetchAllContents();
     fetchMyAssignedTasks();
-    if (isGlobalManager()) {
-      fetchDepartments();
-    }
+    fetchDepartments();
   }, [fetchMyProjects, fetchAllContents, fetchMyAssignedTasks, fetchDepartments, isGlobalManager]);
 
   const handleCreateContent = async (request: ContentCreateRequest, files?: File[]) => {
@@ -125,19 +121,15 @@ export const DashboardPage: React.FC = () => {
     await Promise.all(uploadPromises);
   };
 
-
-
-  const recentProjects = myProjects.slice(0, 3).map((project: any) => ({
+  const recentProjects = myProjects.slice(0, 3).map((project) => ({
     id: project.id,
     name: project.name,
-    progress: project.progress || 0,
     status: getStatusText(project.status),
     dueDate: project.endDate ? new Date(project.endDate).toLocaleDateString('vi-VN') : 'Chưa xác định',
     members: 0, // We don't have member count in the current Project interface
     priority: project.priority || 'MEDIUM'
   }));
 
-  // Use real data for recent activities (from contents)
   const recentActivities = contents.slice(0, 4).map(content => ({
     id: content.id,
     user: content.author.fullName,
@@ -166,9 +158,9 @@ export const DashboardPage: React.FC = () => {
             <p className="text-gray-600">
               Chào mừng trở lại! Đây là tổng quan về các dự án và nhiệm vụ của bạn.
               <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
-                isManager() ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                isGlobalManager() ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
               }`}>
-                {isManager() ? '👑 Manager' : '👤 Staff'}
+                {isGlobalManager() && 'Manager'}
               </span>
             </p>
           </div>
@@ -239,7 +231,7 @@ export const DashboardPage: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm">Đang tải danh sách phòng ban...</p>
+                <p className="text-gray-500 text-sm">Đang tải danh sách phòng...</p>
               )
             ) : (
               <div className="space-y-4">
@@ -315,18 +307,6 @@ export const DashboardPage: React.FC = () => {
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <div className="flex-1 mr-4">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm text-gray-600">Tiến độ</span>
-                            <span className="text-sm font-medium text-gray-900">{project.progress}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${project.progress}%` }}
-                            ></div>
-                          </div>
-                        </div>
                         <div className="flex items-center text-sm text-gray-500">
                           <Users className="w-4 h-4 mr-1" />
                           {project.members}
@@ -419,7 +399,7 @@ export const DashboardPage: React.FC = () => {
                   className="w-full flex items-center justify-center px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200"
                 >
                   <Users className="w-5 h-5 mr-2" />
-                  Mời thành viên
+                  Thêm thành viên
                 </button>
               </div>
             </div>
@@ -429,15 +409,15 @@ export const DashboardPage: React.FC = () => {
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Total Projects */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-primary">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Tổng dự án</h3>
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <CreditCard className="w-5 h-5 text-blue-600" />
+              <div className="p-2 bg-primary-50 rounded-lg">
+                <CreditCard className="w-5 h-5 text-primary-600" />
               </div>
             </div>
             
-            {isManager() ? (
+            {isGlobalManager() ? (
               myProjects.length > 0 ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -445,23 +425,6 @@ export const DashboardPage: React.FC = () => {
                     <span className="text-sm text-green-600 font-medium">
                       {myProjects.filter(p => getStatusText(p.status) === 'Hoàn thành').length} hoàn thành
                     </span>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Tiến độ trung bình</span>
-                      <span className="font-medium">
-                        {Math.round(myProjects.reduce((acc, p) => acc + (p.progress || 0), 0) / myProjects.length)}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ 
-                          width: `${Math.round(myProjects.reduce((acc, p) => acc + (p.progress || 0), 0) / myProjects.length)}%` 
-                        }}
-                      ></div>
-                    </div>
                   </div>
                 </div>
               ) : (

@@ -32,7 +32,6 @@ export const LoginPage: React.FC = () => {
     const [errors, setErrors] = useState<FormErrors>({});
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
     const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
     
     const { navigate } = useNavigationActions();
@@ -173,12 +172,12 @@ export const LoginPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-cyan-50 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center gradient-primary-soft px-4 sm:px-6 lg:px-8">
             {/* Animated background elements */}
             <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse-slow"></div>
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse-slow animation-delay-2000"></div>
-                <div className="absolute top-40 left-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse-slow animation-delay-4000"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse-slow animation-delay-2000"></div>
+                <div className="absolute top-40 left-40 w-80 h-80 bg-accent-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse-slow animation-delay-4000"></div>
             </div>
 
             <div className="relative w-full max-w-md">
@@ -186,8 +185,8 @@ export const LoginPage: React.FC = () => {
                     {/* Header */}
                     <div className="text-center mb-8">
                         <div className="flex items-center justify-center mb-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg">
-                                <span className="text-white text-xl font-bold">F</span>
+                            <div className="w-14 h-14 bg-gradient-to-br from-blue-200 via-violet-200 to-pink-200 rounded-lg flex items-center justify-center shadow-md">
+                                <img src="/vite.svg" alt="FlowX Logo" className="w-12 h-12" />
                             </div>
                             <h1 className="ml-3 text-2xl font-bold text-gray-900">FlowX</h1>
                         </div>
@@ -275,20 +274,6 @@ export const LoginPage: React.FC = () => {
 
                         {/* Remember Me & Forgot Password */}
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <input
-                                    id="remember-me"
-                                    name="remember-me"
-                                    type="checkbox"
-                                    checked={rememberMe}
-                                    onChange={(e) => setRememberMe(e.target.checked)}
-                                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded disabled:opacity-50"
-                                    disabled={isLoading}
-                                />
-                                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                                    Ghi nhớ đăng nhập
-                                </label>
-                            </div>
 
                             <button
                                 type="button"
@@ -304,7 +289,10 @@ export const LoginPage: React.FC = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            className="w-full py-3 px-4 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg hover:shadow-xl font-semibold"
+                            style={{
+                                background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%)'
+                            }}
                         >
                             {isLoading ? (
                                 <div className="flex items-center justify-center">

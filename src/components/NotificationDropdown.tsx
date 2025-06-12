@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNotificationStore } from '../stores/notification-store';
 import type { NotificationResponse } from '../types/notification';
-import { Bell } from 'lucide-react';
+import {Bell} from 'lucide-react';
 
 interface NotificationDropdownProps {
     className?: string;
@@ -71,11 +71,11 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                 className="relative p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors duration-200"
                 aria-label="Notifications"
             >
-                <Bell className="w-6 h-6" />
+                <Bell className={`w-6 h-6 ${unreadCount > 0 ? 'text-red-500 animate-bounce' : 'text-gray-500'}`} />
                 
                 {/* Unread Count Badge */}
                 {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-accent-600 rounded-full">
                         {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                 )}
@@ -91,7 +91,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                             {unreadCount > 0 && (
                                 <button
                                     onClick={handleMarkAllAsRead}
-                                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                    className="text-sm text-primary-600 hover:text-primary-800 font-medium"
                                 >
                                     Mark all as read
                                 </button>
@@ -103,12 +103,12 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                     <div className="max-h-96 overflow-y-auto">
                         {isLoading && (
                             <div className="flex items-center justify-center p-6">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
                             </div>
                         )}
 
                         {error && (
-                            <div className="p-4 text-sm text-red-600 bg-red-50">
+                            <div className="p-4 text-sm text-accent-600 bg-accent-50">
                                 {error}
                             </div>
                         )}
@@ -142,7 +142,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                                     // Navigate to notifications page
                                     window.location.href = '/notifications';
                                 }}
-                                className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                className="w-full text-center text-sm text-primary-600 hover:text-primary-800 font-medium"
                             >
                                 View all notifications
                             </button>
@@ -166,13 +166,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onCli
         <div
             onClick={onClick}
             className={`px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors duration-200 ${
-                !notification.isRead ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                !notification.isRead ? 'bg-primary-50 border-l-4 border-primary-500' : ''
             }`}
         >
             <div className="flex items-start space-x-3">
                 {/* Icon based on entity type */}
                 <div className={`flex-shrink-0 w-2 h-2 mt-2 rounded-full ${
-                    !notification.isRead ? 'bg-blue-500' : 'bg-gray-300'
+                    !notification.isRead ? 'bg-primary-500' : 'bg-gray-300'
                 }`} />
                 
                 <div className="flex-1 min-w-0">

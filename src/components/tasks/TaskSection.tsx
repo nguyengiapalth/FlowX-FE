@@ -170,23 +170,23 @@ const TaskSection: React.FC<TaskSectionProps> = ({
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
+        <div className="bg-white p-4 rounded-lg shadow-sm border card-primary">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Đang làm</p>
-              <p className="text-xl font-bold text-blue-600">{stats.inProgress}</p>
+              <p className="text-xl font-bold text-primary-600">{stats.inProgress}</p>
             </div>
-            <div className="text-blue-600 text-xl">⏳</div>
+            <div className="text-primary-600 text-xl">⏳</div>
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
+        <div className="bg-white p-4 rounded-lg shadow-sm border card-primary">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Hoàn thành</p>
-              <p className="text-xl font-bold text-green-600">{stats.completed}</p>
+              <p className="text-xl font-bold text-secondary-600">{stats.completed}</p>
             </div>
-            <div className="text-green-600 text-xl">✅</div>
+            <div className="text-secondary-600 text-xl">✅</div>
           </div>
         </div>
       </div>

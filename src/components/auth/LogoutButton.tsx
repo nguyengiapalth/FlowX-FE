@@ -75,7 +75,7 @@ export const LogoutButton: React.FC<LogoutButtonProps> = ({
 
       {/* Confirmation Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fade-in">
           <div className="bg-white rounded-xl shadow-2xl p-6 m-4 max-w-sm w-full animate-slide-up">
             <div className="flex items-center justify-center mb-4">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">

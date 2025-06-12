@@ -12,7 +12,7 @@ import Toast from '../components/utils/Toast.tsx';
 import type { UserResponse, UserCreateRequest } from '../types/user';
 
 import { 
-  User 
+  User, Plus, Search, Users, UserCheck, UserX, Building2, Phone, Mail, Eye, Settings, BarChart3, CheckCircle, Clock, AlertTriangle
 } from 'lucide-react';
 
 interface User {
@@ -334,61 +334,121 @@ const UserListPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="mb-8 flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Quản lý nhân sự</h1>
-          <p className="text-gray-600">
-            Quản lý thông tin nhân viên trong công ty. Theo dõi và cập nhật thông tin cá nhân, vị trí công việc.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="max-w-full mx-auto p-4">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-md gradient-primary">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold gradient-primary-text">
+                  Quản lý nhân sự
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Quản lý thông tin nhân viên trong công ty. Theo dõi và cập nhật thông tin cá nhân, vị trí công việc.
+                </p>
+              </div>
+            </div>
+            
+            {canCreateUser() && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="btn-gradient text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300 flex items-center space-x-2 font-medium"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Thêm nhân sự</span>
+              </button>
+            )}
+          </div>
         </div>
-        
-        {canCreateUser() && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            <span>Thêm nhân sự</span>
-          </button>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50/80 backdrop-blur-sm border border-red-200 text-red-700 px-6 py-4 rounded-2xl mb-8 shadow-lg">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="w-5 h-5" />
+              <span>{error}</span>
+            </div>
+          </div>
         )}
-      </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-          {error}
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border border-white/20 hover:shadow-lg transition-all duration-300">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">Tổng nhân sự</p>
+                <p className="text-2xl font-bold text-gray-900">{filteredUsers.length}</p>
+              </div>
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                <BarChart3 className="w-5 h-5 text-white" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border border-white/20 hover:shadow-lg transition-all duration-300">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">Đang hoạt động</p>
+                <p className="text-2xl font-bold text-green-600">{filteredUsers.filter(u => u.status === 'ACTIVE').length}</p>
+              </div>
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-md">
+                <CheckCircle className="w-5 h-5 text-white" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border border-white/20 hover:shadow-lg transition-all duration-300">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">Ngưng hoạt động</p>
+                <p className="text-2xl font-bold text-gray-700">{filteredUsers.filter(u => u.status === 'INACTIVE').length}</p>
+              </div>
+              <div className="w-10 h-10 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center shadow-md">
+                <UserX className="w-5 h-5 text-white" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border border-white/20 hover:shadow-lg transition-all duration-300">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">Phòng ban</p>
+                <p className="text-2xl font-bold text-purple-600">{departments.length}</p>
+              </div>
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
+                <Building2 className="w-5 h-5 text-white" />
+              </div>
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+        {/* Search and Filters */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/20 p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
           <div className="flex-1">
             <div className="relative">
-              <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-              </svg>
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Tìm kiếm theo tên, email, chức vụ..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
               />
             </div>
           </div>
 
           {/* Status Filter */}
-          <div className="w-40">
+          <div className="w-48">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
             >
               <option value="all">Tất cả trạng thái</option>
               <option value="ACTIVE">Hoạt động</option>
@@ -399,11 +459,11 @@ const UserListPage: React.FC = () => {
 
           {/* Department Filter */}
           {isGlobalManager() && (
-            <div className="w-48">
+            <div className="w-52">
               <select
                 value={departmentFilter}
                 onChange={(e) => setDepartmentFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
               >
                 <option value="all">Tất cả phòng ban</option>
                 {departments.map(dept => (
@@ -415,25 +475,31 @@ const UserListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Users List */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        {/* Table Header */}
-        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
-          <div className="grid grid-cols-12 gap-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <div className="col-span-3">Nhân sự</div>
-            <div className="col-span-2">Chức vụ</div>
-            <div className="col-span-2">Phòng ban</div>
-            <div className="col-span-1">Liên hệ</div>
-            <div className="col-span-1">Trạng thái</div>
-            <div className="col-span-3 text-center">Thao tác</div>
+        {/* Users List */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 overflow-hidden">
+          {/* Table Header */}
+          <div className="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-gray-50/50 to-white/50">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">
+              Danh sách nhân sự
+              <span className="ml-2 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                {filteredUsers.length} người
+              </span>
+            </h2>
+            <div className="grid grid-cols-12 gap-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+              <div className="col-span-3">Nhân sự</div>
+              <div className="col-span-2">Chức vụ</div>
+              <div className="col-span-2">Phòng ban</div>
+              <div className="col-span-1">Liên hệ</div>
+              <div className="col-span-1">Trạng thái</div>
+              <div className="col-span-3 text-center">Thao tác</div>
+            </div>
           </div>
-        </div>
 
-        {/* Table Body */}
-        <div className="divide-y divide-gray-200">
-          {filteredUsers.map((user) => (
-            <div key={user.id} className="hover:bg-gray-50 transition-colors">
-              <div className="px-6 py-4 grid grid-cols-12 gap-4 items-center">
+          {/* Table Body */}
+          <div className="divide-y divide-gray-100">
+            {filteredUsers.map((user) => (
+              <div key={user.id} className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/30 transition-all duration-300 cursor-pointer group border-l-4 border-transparent hover:border-blue-400 hover:shadow-sm">
+                <div className="px-6 py-4 grid grid-cols-12 gap-3 items-center">
                 {/* User Info */}
                 <div className="col-span-3">
                   <UserAvatarName 
@@ -446,23 +512,32 @@ const UserListPage: React.FC = () => {
 
                 {/* Position */}
                 <div className="col-span-2">
-                  <p className="text-sm text-gray-900 truncate" title={user.position || ''}>
-                    {user.position || '-'}
-                  </p>
+                  <div className="flex items-center space-x-2">
+                    <Settings className="w-4 h-4 text-gray-400" />
+                    <p className="text-sm text-gray-900 truncate" title={user.position || ''}>
+                      {user.position || '-'}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Department */}
                 <div className="col-span-2">
-                  <p className="text-sm text-gray-900 truncate" title={user.departmentName || ''}>
-                    {user.departmentName || '-'}
-                  </p>
+                  <div className="flex items-center space-x-2">
+                    <Building2 className="w-4 h-4 text-gray-400" />
+                    <p className="text-sm text-gray-900 truncate" title={user.departmentName || ''}>
+                      {user.departmentName || '-'}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Contact */}
                 <div className="col-span-1">
-                  <p className="text-sm text-gray-900 truncate" title={user.phoneNumber || ''}>
-                    {user.phoneNumber || '-'}
-                  </p>
+                  <div className="flex items-center space-x-2">
+                    <Phone className="w-4 h-4 text-gray-400" />
+                    <p className="text-sm text-gray-900 truncate" title={user.phoneNumber || ''}>
+                      {user.phoneNumber || '-'}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Status */}
@@ -487,27 +562,30 @@ const UserListPage: React.FC = () => {
                   <div className="flex items-center justify-center space-x-1">
                     <button
                       onClick={() => handleViewProfile(user.id)}
-                      className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 transition-colors"
+                      className="btn-gradient text-white px-2 py-1 rounded text-xs hover:shadow-md transition-all duration-300 font-medium flex items-center space-x-1"
                       title="Xem profile"
                     >
-                      Xem
+                      <Eye className="w-3 h-3" />
+                      <span>Xem</span>
                     </button>
                     {isGlobalManager() && (
                       <button 
                         onClick={() => handleOpenChangeDepartment(user)}
-                        className="bg-purple-600 text-white px-2 py-1 rounded text-xs hover:bg-purple-700 transition-colors"
+                        className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-2 py-1 rounded text-xs hover:shadow-md transition-all duration-300 font-medium flex items-center space-x-1"
                         title="Thay đổi phòng ban"
                       >
-                        Phòng ban
+                        <Building2 className="w-3 h-3" />
+                        <span>Phòng ban</span>
                       </button>
                     )}
                     {(isGlobalManager() || isDepartmentManager()) && canManageUser(user) && (
                       <button 
                         onClick={() => handleOpenChangePosition(user)}
-                        className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 transition-colors"
+                        className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 py-1 rounded text-xs hover:shadow-md transition-all duration-300 font-medium flex items-center space-x-1"
                         title="Thay đổi chức vụ"
                       >
-                        Chức vụ
+                        <Settings className="w-3 h-3" />
+                        <span>Chức vụ</span>
                       </button>
                     )}
                   </div>
@@ -517,52 +595,33 @@ const UserListPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Empty State in Table */}
-        {filteredUsers.length === 0 && (
-          <div className="text-center py-12">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0H21v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Không tìm thấy nhân sự</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchTerm ? 'Thử tìm kiếm với từ khóa khác.' : 'Hiện tại chưa có nhân sự nào phù hợp.'}
-            </p>
-          </div>
-        )}
+          {/* Empty State in Table */}
+          {filteredUsers.length === 0 && (
+            <div className="text-center py-16">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center gradient-primary">
+                <Users className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Không tìm thấy nhân sự</h3>
+              <p className="text-gray-600 mb-6">
+                {searchTerm ? 'Thử tìm kiếm với từ khóa khác.' : 'Hiện tại chưa có nhân sự nào phù hợp.'}
+              </p>
+              {canCreateUser() && !searchTerm && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="btn-gradient text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-300 font-semibold"
+                >
+                  Thêm nhân sự đầu tiên
+                </button>
+              )}
+            </div>
+          )}
       </div>
 
-      {/* Stats Summary */}
-      <div className="mt-8 bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Thống kê nhân sự</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{filteredUsers.length}</div>
-            <div className="text-sm text-gray-600">Tổng nhân sự</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {filteredUsers.filter(u => u.status === 'ACTIVE').length}
-            </div>
-            <div className="text-sm text-gray-600">Đang hoạt động</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-600">
-              {filteredUsers.filter(u => u.status === 'INACTIVE').length}
-            </div>
-            <div className="text-sm text-gray-600">Ngưng hoạt động</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">
-              {departments.length}
-            </div>
-            <div className="text-sm text-gray-600">Phòng ban</div>
-          </div>
-        </div>
-      </div>
+
 
       {/* Create User Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Thêm nhân sự mới</h2>
             
@@ -663,7 +722,7 @@ const UserListPage: React.FC = () => {
               </button>
               <button
                 onClick={handleCreateUser}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="flex-1 btn-gradient text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Đang tạo...' : 'Tạo nhân sự'}
@@ -675,7 +734,7 @@ const UserListPage: React.FC = () => {
 
       {/* Change Department Modal */}
       {showChangeDepartmentModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Thay đổi phòng ban
@@ -754,7 +813,7 @@ const UserListPage: React.FC = () => {
 
       {/* Change Position Modal */}
       {showChangePositionModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Thay đổi chức vụ
@@ -828,12 +887,13 @@ const UserListPage: React.FC = () => {
         </div>
       )}
 
-      {/* Toast Notification */}
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        onClose={hideToast}
-      />
+        {/* Toast Notification */}
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      </div>
     </div>
   );
 };

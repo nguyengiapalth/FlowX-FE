@@ -88,48 +88,60 @@ class GoogleAuthService {
       button.style.alignItems = 'center';
       button.style.justifyContent = 'center';
       button.style.width = '100%';
-      button.style.padding = size === 'large' ? '10px 16px' : size === 'medium' ? '8px 12px' : '6px 10px';
-      button.style.borderRadius = shape === 'rectangular' ? '4px' : shape === 'pill' ? '20px' : shape === 'circle' ? '50%' : '0';
+      button.style.padding = size === 'large' ? '12px 24px' : size === 'medium' ? '10px 20px' : '8px 16px';
+      button.style.borderRadius = shape === 'rectangular' ? '8px' : shape === 'pill' ? '20px' : shape === 'circle' ? '50%' : '8px';
       button.style.fontSize = size === 'large' ? '16px' : size === 'medium' ? '14px' : '12px';
+      button.style.fontWeight = '600';
       button.style.cursor = 'pointer';
-      button.style.transition = 'background-color 0.3s, box-shadow 0.3s';
+      button.style.transition = 'all 0.2s ease-in-out';
+      button.style.border = 'none';
+      button.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
 
-      if (theme === 'outline') {
-        button.style.backgroundColor = 'white';
-        button.style.border = '1px solid #dadce0';
-        button.style.color = '#3c4043';
-      } else if (theme === 'filled_blue') {
-        button.style.backgroundColor = '#4285f4';
-        button.style.border = 'none';
-        button.style.color = 'white';
-      } else if (theme === 'filled_black') {
-        button.style.backgroundColor = '#202124';
-        button.style.border = 'none';
-        button.style.color = 'white';
-      }
+      // Apply FlowX gradient theme
+      button.style.background = 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%)';
+      button.style.color = 'white';
+
+      // Add hover effects
+      button.addEventListener('mouseenter', () => {
+        button.style.transform = 'scale(1.02)';
+        button.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+      });
+
+      button.addEventListener('mouseleave', () => {
+        button.style.transform = 'scale(1)';
+        button.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+      });
+
+      button.addEventListener('mousedown', () => {
+        button.style.transform = 'scale(0.98)';
+      });
+
+      button.addEventListener('mouseup', () => {
+        button.style.transform = 'scale(1.02)';
+      });
 
       // Add Google logo
       const googleLogo = document.createElement('span');
       googleLogo.innerHTML = `
-        <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+          <path fill="white" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="white" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="white" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="white" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
         </svg>
       `;
-      googleLogo.style.marginRight = '8px';
+      googleLogo.style.marginRight = '12px';
 
       // Add text based on option
       let buttonText;
       if (text === 'signin_with') {
-        buttonText = 'Sign in with Google';
+        buttonText = 'Đăng nhập với Google';
       } else if (text === 'signup_with') {
-        buttonText = 'Sign up with Google';
+        buttonText = 'Đăng ký với Google';
       } else if (text === 'continue_with') {
-        buttonText = 'Continue with Google';
+        buttonText = 'Tiếp tục với Google';
       } else {
-        buttonText = 'Sign in';
+        buttonText = 'Đăng nhập';
       }
 
       // Add text to button

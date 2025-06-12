@@ -37,7 +37,6 @@ interface Project {
 }
 
 const ProjectListPage: React.FC = () => {
-  const navigate = useNavigate();
   const { user } = useProfileStore();
   const { isGlobalManager, isDepartmentManager, canAccessAllProjectsInDepartment } = useAuthStore();
 
@@ -249,51 +248,36 @@ const ProjectListPage: React.FC = () => {
       description: '',
       startDate: '',
       endDate: '',
-      status: 'NOT_STARTED' as ProjectStatus,
-      priority: 'MEDIUM' as PriorityLevel
+      status: 'NOT_STARTED',
+      priority: 'MEDIUM'
     });
   };
 
   const canManageProject = (project: Project): boolean => {
-    if (isGlobalManager()) return true;
-    if (isDepartmentManager()) {
-      return user?.department?.id === project.departmentId;
-    }
+    if (isGlobalManager) return true;
+    if (isDepartmentManager && canAccessAllProjectsInDepartment) return true;
     return false;
   };
 
   const canCreateProject = (): boolean => {
-    return isGlobalManager() || isDepartmentManager();
+    return isGlobalManager || isDepartmentManager;
   };
 
-  // Filter projects based on search term, filter type, and department
+  // Filter projects based on search term and filters
   const filteredProjects = projects.filter(project => {
     // Search filter
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.departmentName.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Type filter
-    let matchesFilter = true;
-    switch (filter) {
-      case 'joined':
-        matchesFilter = project.isJoined;
-        break;
-      case 'discover':
-        matchesFilter = !project.isJoined;
-        break;
-      case 'active':
-        matchesFilter = project.status === 'IN_PROGRESS';
-        break;
-      case 'completed':
-        matchesFilter = project.status === 'COMPLETED';
-        break;
-      case 'paused':
-        matchesFilter = project.status === 'ON_HOLD';
-        break;
-      default:
-        matchesFilter = true;
-    }
+    const matchesSearch = !searchTerm || 
+      project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.departmentName.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Status filter
+    const matchesFilter = filter === 'all' || 
+      (filter === 'joined' && project.isJoined) ||
+      (filter === 'discover' && !project.isJoined) ||
+      (filter === 'active' && project.status === 'IN_PROGRESS') ||
+      (filter === 'completed' && project.status === 'COMPLETED') ||
+      (filter === 'paused' && project.status === 'PAUSED');
 
     // Department filter
     const matchesDepartment = departmentFilter === 'all' || project.departmentId === departmentFilter;
@@ -302,62 +286,60 @@ const ProjectListPage: React.FC = () => {
   });
 
   const getStatusText = (status: ProjectStatus) => {
-    const statusMap = {
-      'NOT_STARTED': 'Chưa bắt đầu',
-      'IN_PROGRESS': 'Đang thực hiện',
-      'ON_HOLD': 'Tạm dừng',
-      'COMPLETED': 'Hoàn thành',
-      'CANCELLED': 'Hủy bỏ'
-    };
-    return statusMap[status] || status;
+    switch (status) {
+      case 'NOT_STARTED': return 'Chưa bắt đầu';
+      case 'IN_PROGRESS': return 'Đang thực hiện';
+      case 'COMPLETED': return 'Hoàn thành';
+      case 'PAUSED': return 'Tạm dừng';
+      default: return status;
+    }
   };
 
   const getStatusColor = (status: ProjectStatus) => {
-    const colorMap = {
-      'NOT_STARTED': 'bg-gray-100 text-gray-800',
-      'IN_PROGRESS': 'bg-blue-100 text-blue-800',
-      'ON_HOLD': 'bg-yellow-100 text-yellow-800',
-      'COMPLETED': 'bg-green-100 text-green-800',
-      'CANCELLED': 'bg-red-100 text-red-800'
-    };
-    return colorMap[status] || 'bg-gray-100 text-gray-800';
+    switch (status) {
+      case 'NOT_STARTED': return 'bg-gray-100 text-gray-800';
+      case 'IN_PROGRESS': return 'bg-blue-100 text-blue-800';
+      case 'COMPLETED': return 'bg-green-100 text-green-800';
+      case 'PAUSED': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   const getPriorityText = (priority: PriorityLevel) => {
-    const priorityMap: Record<PriorityLevel, string> = {
-      'LOW': 'Thấp',
-      'MEDIUM': 'Trung bình',
-      'HIGH': 'Cao',
-      'URGENT': 'Khẩn cấp',
-      'CRITICAL': 'Nghiêm trọng'
-    };
-    return priorityMap[priority] || priority;
+    switch (priority) {
+      case 'LOW': return 'Thấp';
+      case 'MEDIUM': return 'Trung bình';
+      case 'HIGH': return 'Cao';
+      case 'URGENT': return 'Khẩn cấp';
+      default: return priority;
+    }
   };
 
   const getPriorityColor = (priority: PriorityLevel) => {
-    const colorMap: Record<PriorityLevel, string> = {
-      'LOW': 'bg-green-100 text-green-800',
-      'MEDIUM': 'bg-blue-100 text-blue-800',
-      'HIGH': 'bg-orange-100 text-orange-800',
-      'URGENT': 'bg-red-100 text-red-800',
-      'CRITICAL': 'bg-red-200 text-red-900'
-    };
-    return colorMap[priority] || 'bg-gray-100 text-gray-800';
+    switch (priority) {
+      case 'LOW': return 'bg-green-100 text-green-800';
+      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
+      case 'HIGH': return 'bg-orange-100 text-orange-800';
+      case 'URGENT': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-sm border p-6">
-                <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-              </div>
-            ))}
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="max-w-full mx-auto p-4">
+          <div className="animate-pulse">
+            <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white rounded-lg shadow-sm border p-4">
+                  <div className="h-5 bg-gray-200 rounded w-3/4 mb-3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -366,223 +348,234 @@ const ProjectListPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-800">{error}</p>
-          <button
-            onClick={loadInitialData}
-            className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Thử lại
-          </button>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="max-w-full mx-auto p-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <p className="text-red-800">{error}</p>
+            <button
+              onClick={loadInitialData}
+              className="mt-4 btn-gradient text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Thử lại
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dự án</h1>
-          <p className="mt-2 text-gray-600">Quản lý và theo dõi các dự án của bạn</p>
-        </div>
-        
-        {canCreateProject() && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="mt-4 sm:mt-0 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Tạo dự án mới</span>
-          </button>
-        )}
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm dự án..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Filter by type */}
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as typeof filter)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-            >
-              <option value="all">Tất cả dự án</option>
-              <option value="joined">Đã tham gia</option>
-              <option value="discover">Khám phá</option>
-              <option value="active">Đang hoạt động</option>
-              <option value="completed">Hoàn thành</option>
-              <option value="paused">Tạm dừng</option>
-            </select>
-          </div>
-
-          {/* Filter by department */}
-          <div className="relative">
-            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <select
-              value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-            >
-              <option value="all">Tất cả phòng ban</option>
-              {departments.map(dept => (
-                <option key={dept.id} value={dept.id}>{dept.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Projects List */}
-      <div className="space-y-4">
-        {filteredProjects.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Không có dự án nào</h3>
-            <p className="text-gray-500 mb-6">
-              {searchTerm || filter !== 'all' || departmentFilter !== 'all'
-                ? 'Không tìm thấy dự án phù hợp với bộ lọc hiện tại.'
-                : 'Chưa có dự án nào được tạo.'}
-            </p>
-            {canCreateProject() && !searchTerm && filter === 'all' && departmentFilter === 'all' && (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="max-w-full mx-auto p-4">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-md gradient-primary">
+                <Building className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold gradient-primary-text">Dự án</h1>
+                <p className="text-sm text-gray-600">Quản lý và theo dõi các dự án của bạn</p>
+              </div>
+            </div>
+            
+            {canCreateProject() && (
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                className="btn-gradient text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300 flex items-center space-x-2 font-medium"
               >
-                Tạo dự án đầu tiên
+                <Plus className="w-4 h-4" />
+                <span>Tạo dự án mới</span>
               </button>
             )}
           </div>
-        ) : (
-          filteredProjects.map((project) => (
-            <div key={project.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                {/* Project Info */}
-                <div className="flex-1">
-                  <div className="flex items-start space-x-4">
-                    {/* Project Icon */}
-                    <div className="bg-blue-100 p-3 rounded-lg">
-                      <Building className="w-6 h-6 text-blue-600" />
-                    </div>
+        </div>
 
-                    {/* Main Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <Link
-                          to={`/project/${project.id}`}
-                          className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors"
-                        >
-                          {project.name}
-                        </Link>
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
-                            {getStatusText(project.status)}
-                          </span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(project.priority)}`}>
-                            {getPriorityText(project.priority)}
-                          </span>
-                        </div>
+        {/* Filters */}
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm dự án..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Filter by type */}
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as typeof filter)}
+                className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+              >
+                <option value="all">Tất cả dự án</option>
+                <option value="joined">Đã tham gia</option>
+                <option value="discover">Khám phá</option>
+                <option value="active">Đang hoạt động</option>
+                <option value="completed">Hoàn thành</option>
+                <option value="paused">Tạm dừng</option>
+              </select>
+            </div>
+
+            {/* Filter by department */}
+            <div className="relative">
+              <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={departmentFilter}
+                onChange={(e) => setDepartmentFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+                className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+              >
+                <option value="all">Tất cả phòng ban</option>
+                {departments.map(dept => (
+                  <option key={dept.id} value={dept.id}>{dept.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Projects List */}
+        <div className="space-y-3">
+          {filteredProjects.length === 0 ? (
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-white/20 p-8 text-center">
+              <Building className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Không có dự án nào</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                {searchTerm || filter !== 'all' || departmentFilter !== 'all'
+                  ? 'Không tìm thấy dự án phù hợp với bộ lọc hiện tại.'
+                  : 'Chưa có dự án nào được tạo.'}
+              </p>
+              {canCreateProject() && !searchTerm && filter === 'all' && departmentFilter === 'all' && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="btn-gradient text-white px-6 py-3 rounded-lg transition-colors"
+                >
+                  Tạo dự án đầu tiên
+                </button>
+              )}
+            </div>
+          ) : (
+            filteredProjects.map((project) => (
+              <div key={project.id} className="bg-white/70 backdrop-blur-sm rounded-2xl border border-white/20 p-4 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-start justify-between">
+                  {/* Project Info */}
+                  <div className="flex-1">
+                    <div className="flex items-start space-x-3">
+                      {/* Project Icon */}
+                      <div className="gradient-primary p-2 rounded-lg">
+                        <Building className="w-5 h-5 text-white" />
                       </div>
 
-                      {/* Description */}
-                      {project.description && (
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                          {project.description}
-                        </p>
-                      )}
-
-                      {/* Meta Info */}
-                      <div className="flex items-center space-x-6 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <Building className="w-4 h-4" />
-                          <span>{project.departmentName}</span>
-                        </div>
-                        {project.startDate && (
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>{new Date(project.startDate).toLocaleDateString('vi-VN')}</span>
+                      {/* Main Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Link
+                            to={`/project/${project.id}`}
+                            className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                          >
+                            {project.name}
+                          </Link>
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                              {getStatusText(project.status)}
+                            </span>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(project.priority)}`}>
+                              {getPriorityText(project.priority)}
+                            </span>
                           </div>
+                        </div>
+
+                        {/* Description */}
+                        {project.description && (
+                          <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+                            {project.description}
+                          </p>
                         )}
-                        <div className="flex items-center space-x-1">
-                          <Users className="w-4 h-4" />
-                          <span>0 thành viên</span> {/* TODO: Add member count */}
+
+                        {/* Meta Info */}
+                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                          <div className="flex items-center space-x-1">
+                            <Building className="w-3 h-3" />
+                            <span>{project.departmentName}</span>
+                          </div>
+                          {project.startDate && (
+                            <div className="flex items-center space-x-1">
+                              <Calendar className="w-3 h-3" />
+                              <span>{new Date(project.startDate).toLocaleDateString('vi-VN')}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center space-x-1">
+                            <Users className="w-3 h-3" />
+                            <span>0 thành viên</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Actions */}
-                <div className="flex items-center space-x-2 ml-4">
-                  <Link
-                    to={`/project/${project.id}`}
-                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Xem chi tiết"
-                  >
-                    <Eye className="w-5 h-5" />
-                  </Link>
+                  {/* Actions */}
+                  <div className="flex items-center space-x-1 ml-3">
+                    <Link
+                      to={`/project/${project.id}`}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Xem chi tiết"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Link>
 
-                  {canManageProject(project) && (
-                    <div className="flex items-center space-x-1">
-                      <button
-                        onClick={() => openEditModal(project)}
-                        className="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
-                        title="Chỉnh sửa"
-                      >
-                        <Edit className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => openDeleteModal(project)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Xóa"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  )}
+                    {canManageProject(project) && (
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => openEditModal(project)}
+                          className="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
+                          title="Chỉnh sửa"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(project)}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Xóa"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
 
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            ))
+          )}
+        </div>
+
+        {/* Project Create Modal */}
+        <ProjectCreateModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={handleProjectCreateSuccess}
+          onError={handleProjectCreateError}
+        />
+
+        {/* Toast Notification */}
+        {toast.visible && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={hideToast}
+          />
         )}
       </div>
-
-      {/* Project Create Modal */}
-      <ProjectCreateModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSuccess={handleProjectCreateSuccess}
-        onError={handleProjectCreateError}
-      />
-
-      {/* Toast Notification */}
-      {toast.visible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={hideToast}
-        />
-      )}
     </div>
   );
 };
 
-export default ProjectListPage; 
+export default ProjectListPage;

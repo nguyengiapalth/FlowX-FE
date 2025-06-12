@@ -52,8 +52,8 @@ export const AuthChecker: React.FC<AuthCheckerProps> = ({ children }) => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-cyan-50">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg animate-pulse">
-              <span className="text-white text-2xl font-bold">F</span>
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-200 via-violet-200 to-pink-200 rounded-xl flex items-center justify-center shadow-lg">
+              <img src="/vite.svg" alt="FlowX Logo" className="w-12 h-12" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">FlowX</h1>

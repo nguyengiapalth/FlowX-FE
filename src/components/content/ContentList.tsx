@@ -3,6 +3,8 @@ import type { ContentResponse } from '../../types/content';
 import { ContentCard } from './ContentCard';
 import { ContentModal } from './ContentModal';
 import { useUserContents, useGlobalContents } from '../../hooks/useContent';
+import { useContentAutoRefresh } from '../../hooks/useContentAutoRefresh';
+import { AutoRefreshControl } from '../shared/AutoRefreshControl';
 import {
   Info,
   ImageIcon
@@ -11,16 +13,32 @@ import {
 interface ContentListProps {
   userId?: number; // Nếu có userId thì lấy content của user đó, nếu không thì lấy global content
   showCreatePost?: boolean;
+  showAutoRefresh?: boolean; // Hiển thị điều khiển auto refresh
+  autoRefreshInterval?: number; // Khoảng thời gian auto refresh
 }
 
-export const ContentList: React.FC<ContentListProps> = ({ userId, showCreatePost = false }) => {
+export const ContentList: React.FC<ContentListProps> = ({ 
+  userId, 
+  showCreatePost = false,
+  showAutoRefresh = true,
+  autoRefreshInterval = 30000
+}) => {
   const [selectedContent, setSelectedContent] = useState<ContentResponse | null>(null);
   const [showContentModal, setShowContentModal] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(autoRefreshInterval);
 
   // Use appropriate hook based on userId
   const { contents, isLoading, error, deleteContent } = userId 
     ? useUserContents(userId)
     : useGlobalContents();
+
+  // Auto refresh hook
+  const autoRefresh = useContentAutoRefresh({
+    enabled: showAutoRefresh,
+    interval: refreshInterval,
+    refreshType: userId ? 'user' : 'global',
+    userId: userId
+  });
 
   const handleViewDetail = (contentId: number) => {
     const content = contents.find(c => c.id === contentId);
@@ -83,6 +101,21 @@ export const ContentList: React.FC<ContentListProps> = ({ userId, showCreatePost
   return (
     <>
       <div className="space-y-6">
+        {/* Auto Refresh Control */}
+        {showAutoRefresh && (
+          <AutoRefreshControl
+            isRefreshing={autoRefresh.isRefreshing}
+            isActive={autoRefresh.isAutoRefreshActive}
+            lastRefreshTime={autoRefresh.lastRefreshTime}
+            onToggle={autoRefresh.toggleAutoRefresh}
+            onRefreshNow={autoRefresh.refreshNow}
+            onIntervalChange={setRefreshInterval}
+            currentInterval={refreshInterval}
+            compact={true}
+            className="mb-4"
+          />
+        )}
+
         {/* Create Post Section - chỉ hiển thị nếu showCreatePost = true */}
         {showCreatePost && (
           <div className="bg-white rounded-lg shadow-sm border p-4">
