@@ -7,6 +7,7 @@ import { useContentStore } from '../stores/content-store';
 import { useTaskStore } from '../stores/task-store';
 import { ExpandableCreateForm } from '../index.ts';
 import SimpleToast from '../components/utils/SimpleToast';
+import { LocalStorageTracker } from '../components/LocalStorageTracker';
 import { useNavigationActions } from '../utils/navigation.utils';
 import type { ContentCreateRequest } from '../types/content';
 import type { FileCreateRequest } from '../types/file';
@@ -470,6 +471,11 @@ export const DashboardPage: React.FC = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* LocalStorage Tracker */}
+        <div className="mb-8">
+          <LocalStorageTracker />
         </div>
       </main>
     </>

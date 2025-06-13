@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useProfileStore } from '../stores/profile-store';
+import { useProjectStore } from '../stores/project-store';
 import { useNavigationActions } from '../utils/navigation.utils';
 import { 
   LayoutDashboard, 
@@ -38,8 +39,9 @@ const ProjectDetailPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { handleProfileClick, navigate } = useNavigationActions();
   const { user } = useProfileStore();
-  const { isManager } = useAuthStore();
+  const { isProjectManager } = useAuthStore();
   const { createContent, syncContentFiles } = useContentStore();
+  const { myProjects, fetchMyProjects } = useProjectStore();
   const [activeTab, setActiveTab] = useState<'members' | 'tasks' | 'discussion' | 'about'>('members');
 
   // States for real data
@@ -78,6 +80,67 @@ const ProjectDetailPage: React.FC = () => {
   const [changingRole, setChangingRole] = useState<{ [memberId: number]: boolean }>({});
 
   const projectIdNum = parseInt(projectId || '1');
+
+  // Load project data
+  useEffect(() => {
+    const loadData = async () => {
+      if (!projectIdNum || isNaN(projectIdNum)) {
+        setError('ID dự án không hợp lệ');
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Check if we already have project data from store
+        const projectFromStore = myProjects.find(p => p.id === projectIdNum);
+        
+        // Load project info and members in parallel
+        const promises = [
+          projectFromStore ? Promise.resolve({ data: projectFromStore, code: 200 }) : projectService.getProjectById(projectIdNum),
+          projectMemberService.getMembersByProjectId(projectIdNum)
+        ];
+
+        const [projectResponse, membersResponse] = await Promise.all(promises);
+
+        // Handle project data
+        if (projectResponse.code === 200 && projectResponse.data) {
+          setProjectData(projectResponse.data);
+          // Update store if we fetched fresh data
+          if (!projectFromStore) {
+            fetchMyProjects();
+          }
+        } else {
+          setError('Không thể tải thông tin dự án');
+        }
+
+        // Handle members data
+        if (membersResponse.code === 200 && membersResponse.data) {
+          setMembers(membersResponse.data);
+        }
+
+      } catch (error: any) {
+        console.error('Failed to load project data:', error);
+        setError('Không thể tải dữ liệu dự án. Vui lòng thử lại.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [projectIdNum, fetchMyProjects]);
+
+  // Update project data when store changes
+  useEffect(() => {
+    if (myProjects.length > 0) {
+      const projectFromStore = myProjects.find(p => p.id === projectIdNum);
+      if (projectFromStore && !projectData) {
+        setProjectData(projectFromStore);
+      }
+    }
+  }, [myProjects, projectIdNum, projectData]);
 
   // Handle view profile
   const handleViewProfile = (userId: number) => {
@@ -381,35 +444,6 @@ const ProjectDetailPage: React.FC = () => {
     await Promise.all(uploadPromises);
   };
 
-  // Load project data
-  useEffect(() => {
-    const loadData = async () => {
-      if (!projectIdNum) return;
-      
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Load project info and members in parallel
-        const [projectResponse, membersResponse] = await Promise.all([
-          projectService.getProjectById(projectIdNum),
-          projectMemberService.getMembersByProjectId(projectIdNum)
-        ]);
-
-        if (projectResponse.data) setProjectData(projectResponse.data);
-        if (membersResponse.data) setMembers(membersResponse.data);
-
-      } catch (error) {
-        console.error('Failed to load project data:', error);
-        setError('Không thể tải dữ liệu dự án');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [projectIdNum]);
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN', {
       year: 'numeric',
@@ -491,7 +525,7 @@ const ProjectDetailPage: React.FC = () => {
         >
 
           {/* Background Edit Button - only shown if user is manager */}
-          {isManager() && (
+          {isProjectManager() && (
             <button 
               onClick={() => setShowBackgroundModal(true)}
               className="absolute top-4 right-4 bg-white text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors shadow-lg flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -562,7 +596,7 @@ const ProjectDetailPage: React.FC = () => {
               <h2 className="text-xl font-semibold text-gray-900">Thành viên dự án</h2>
               
               {/* Add Member Button - only show if user can manage project */}
-              {isManager() && (
+              {isProjectManager() && (
                 <button
                   onClick={handleOpenAddMemberModal}
                   className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -579,7 +613,7 @@ const ProjectDetailPage: React.FC = () => {
                 <p className="text-gray-500 mb-4">Chưa có thành viên nào trong dự án này</p>
                 
                 {/* Add Member Button for empty state */}
-                {isManager() && (
+                {isProjectManager(projectIdNum) && (
                   <button
                     onClick={handleOpenAddMemberModal}
                     className="inline-flex items-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
@@ -607,7 +641,7 @@ const ProjectDetailPage: React.FC = () => {
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             {/* Role Badge with Selector for Managers */}
-                            {isManager() ? (
+                            {isProjectManager() ? (
                               <div className="flex items-center space-x-2">
                                 <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRoleColor(member.role)}`}>
                                   {React.createElement(getRoleIcon(member.role), { className: "w-3 h-3" })}
@@ -703,7 +737,7 @@ const ProjectDetailPage: React.FC = () => {
               <h2 className="text-xl font-semibold text-gray-900">Thông tin dự án</h2>
               
               {/* Edit button - only show if user can manage project */}
-              {isManager() && !isEditingInfo && (
+              {isProjectManager() && !isEditingInfo && (
                 <button
                   onClick={startEditInfo}
                   className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

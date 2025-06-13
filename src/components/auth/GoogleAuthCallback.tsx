@@ -1,18 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import authService from '../../services/auth.service';
 import { useAuthStore } from '../../stores/auth-store';
-import { useProfileStore } from '../../stores/profile-store';
-import { useDepartmentStore } from '../../stores/department-store';
-import { useProjectStore } from '../../stores/project-store';
+import { enhancedLogin } from '../../utils/auth-flow.utils';
 import { useNavigationActions } from '../../utils/navigation.utils';
 
 export const GoogleAuthCallback: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { navigate, handleGoToLogin } = useNavigationActions();
-  const { setAccessToken, fetchUserRoles, isGlobalManager } = useAuthStore();
-  const { fetchProfile } = useProfileStore();
-  const { fetchDepartments } = useDepartmentStore();
-  const { fetchMyProjects } = useProjectStore();
+  const { setAccessToken } = useAuthStore();
 
   useEffect(() => {
     const processGoogleCallback = async () => {
@@ -28,30 +23,28 @@ export const GoogleAuthCallback: React.FC = () => {
           throw new Error('No ID token found in the callback URL');
         }
         
-        // Authenticate with the backend using the ID token
-        const response = await authService.authenticateWithGoogle(idToken);
-        
-        if (response.data && response.data.authenticated) {
-          setAccessToken(response.data.token);
-          
-          console.log('Google authentication successful!');
-          
-          // Fetch data after successful auth
-          await fetchProfile();
-          await fetchUserRoles();
-          
-          // Fetch role-based data
-          if (isGlobalManager()) {
-            await fetchDepartments();
-          } else {
-            await fetchMyProjects();
+        // Authenticate with the backend using the enhanced login flow
+        await enhancedLogin(
+          () => authService.authenticateWithGoogle(idToken),
+          setAccessToken,
+          {
+            delayBetweenActions: 500,
+            onProgress: (step) => {
+              console.log('Google auth progress:', step);
+            },
+            onError: (error) => {
+              console.error('Google auth flow error:', error);
+            }
           }
-          
-          // Redirect to dashboard
-          navigate('/dashboard', { replace: true });
-        } else {
-          setError('Google authentication failed. Please try again.');
-        }
+        );
+        
+        console.log('Google authentication successful!');
+        
+        // Small delay before navigation
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Redirect to dashboard
+        navigate('/dashboard', { replace: true });
       } catch (error: any) {
         console.error('Google auth callback error:', error);
         
@@ -69,7 +62,7 @@ export const GoogleAuthCallback: React.FC = () => {
     };
     
     processGoogleCallback();
-  }, [navigate, setAccessToken, fetchProfile, fetchUserRoles, fetchDepartments, fetchMyProjects, isGlobalManager]);
+  }, [navigate, setAccessToken]);
   
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-4 sm:px-6 lg:px-8"

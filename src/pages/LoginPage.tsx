@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigationActions } from '../utils/navigation.utils';
+import { enhancedLogin, usePostLoginFlow } from '../utils/auth-flow.utils';
 import authService from '../services/auth.service';
 import { useAuthStore } from '../stores/auth-store';
-import { useProfileStore } from '../stores/profile-store';
-import { useDepartmentStore } from '../stores/department-store';
-import { useProjectStore } from '../stores/project-store';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton.tsx';
 import { ForgotPasswordModal } from '../components/auth/ForgotPasswordModal.tsx';
 import type { AuthenticationRequest } from '../types/auth';
@@ -31,14 +29,12 @@ export const LoginPage: React.FC = () => {
     
     const [errors, setErrors] = useState<FormErrors>({});
     const [isLoading, setIsLoading] = useState(false);
+    const [loadingStep, setLoadingStep] = useState<string>('');
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
     
     const { navigate } = useNavigationActions();
-    const { setAccessToken, fetchUserRoles, isGlobalManager } = useAuthStore();
-    const { fetchProfile } = useProfileStore();
-    const { fetchDepartments } = useDepartmentStore();
-    const { fetchMyProjects } = useProjectStore();
+    const { setAccessToken } = useAuthStore();
 
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {};
@@ -88,26 +84,30 @@ export const LoginPage: React.FC = () => {
         setErrors({});
 
         try {
-            const response = await authService.login(formData);
+            await enhancedLogin(
+                () => authService.login(formData),
+                setAccessToken,
+                {
+                    delayBetweenActions: 500, // 500ms delay
+                    onProgress: (step) => {
+                        console.log('Login progress:', step);
+                        setLoadingStep(step);
+                    },
+                    onError: (error) => {
+                        console.error('Login flow error:', error);
+                        setLoadingStep('');
+                    }
+                }
+            );
             
-            if (response.data && response.data.authenticated) {
-                setAccessToken(response.data.token);
-                
-                console.log('Đăng nhập thành công!');
-                
-                // Fetch data after successful auth
-                await fetchProfile();
-                await fetchUserRoles();
-                
-                // Fetch role-based data
-                await fetchDepartments();
-                await fetchMyProjects();
-
-                // Redirect to dashboard
-                navigate('/dashboard', { replace: true });
-            } else {
-                setErrors({ general: 'Đăng nhập thất bại. Vui lòng thử lại.' });
-            }
+            console.log('Đăng nhập thành công!');
+            
+            // Small delay before navigation to ensure everything is loaded
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Redirect to dashboard
+            navigate('/dashboard', { replace: true });
+            
         } catch (error: any) {
             console.error('Login error:', error);
             
@@ -118,6 +118,7 @@ export const LoginPage: React.FC = () => {
             setErrors({ general: errorMessage });
         } finally {
             setIsLoading(false);
+            setLoadingStep('');
         }
     };
 
@@ -130,29 +131,30 @@ export const LoginPage: React.FC = () => {
         setErrors({});
 
         try {
-            const response = await authService.authenticateWithGoogle(data.idToken);
-            
-            if (response.data && response.data.authenticated) {
-                setAccessToken(response.data.token);
-                
-                console.log('Đăng nhập Google thành công!');
-                
-                // Fetch data after successful auth
-                await fetchProfile();
-                await fetchUserRoles();
-                
-                // Fetch role-based data
-                if (isGlobalManager()) {
-                    await fetchDepartments();
-                } else {
-                    await fetchMyProjects();
+            await enhancedLogin(
+                () => authService.authenticateWithGoogle(data.idToken),
+                setAccessToken,
+                {
+                    delayBetweenActions: 500, // 500ms delay
+                    onProgress: (step) => {
+                        console.log('Google login progress:', step);
+                        setLoadingStep(step);
+                    },
+                    onError: (error) => {
+                        console.error('Google login flow error:', error);
+                        setLoadingStep('');
+                    }
                 }
-                
-                // Redirect to dashboard
-                navigate('/dashboard', { replace: true });
-            } else {
-                setErrors({ general: 'Đăng nhập Google thất bại. Vui lòng thử lại.' });
-            }
+            );
+            
+            console.log('Đăng nhập Google thành công!');
+            
+            // Small delay before navigation to ensure everything is loaded
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Redirect to dashboard
+            navigate('/dashboard', { replace: true });
+            
         } catch (error: any) {
             console.error('Google auth error:', error);
             
@@ -163,6 +165,7 @@ export const LoginPage: React.FC = () => {
             setErrors({ general: errorMessage });
         } finally {
             setIsLoading(false);
+            setLoadingStep('');
         }
     };
 
@@ -297,7 +300,7 @@ export const LoginPage: React.FC = () => {
                             {isLoading ? (
                                 <div className="flex items-center justify-center">
                                     <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
-                                    Đang đăng nhập...
+                                    {loadingStep || 'Đang đăng nhập...'}
                                 </div>
                             ) : (
                                 'Đăng nhập'

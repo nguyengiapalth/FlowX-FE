@@ -41,7 +41,7 @@ const TaskPage: React.FC = () => {
   }, [activeTab]);
 
   const autoRefresh = useTaskAutoRefresh({
-    enabled: true, /
+    enabled: true,
     interval: refreshInterval,
     refreshType
   });

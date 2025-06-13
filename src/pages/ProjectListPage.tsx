@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useProfileStore } from '../stores/profile-store';
 import { useAuthStore } from '../stores/auth-store';
+import { useProjectStore } from '../stores/project-store';
 import projectService from '../services/project.service';
 import departmentService from '../services/department.service';
 import Toast from '../components/utils/Toast.tsx';
@@ -39,14 +40,28 @@ interface Project {
 const ProjectListPage: React.FC = () => {
   const { user } = useProfileStore();
   const { isGlobalManager, isDepartmentManager, canAccessAllProjectsInDepartment } = useAuthStore();
+  const { myProjects, isLoading: projectsLoading, error: projectsError, fetchMyProjects } = useProjectStore();
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'joined' | 'discover' | 'active' | 'completed' | 'paused'>('all');
   const [departmentFilter, setDepartmentFilter] = useState<number | 'all'>('all');
   
-  // Data states
-  const [projects, setProjects] = useState<Project[]>([]);
+  // Data states - Convert ProjectResponse to local Project interface
+  const projects = myProjects.map(proj => ({
+    id: proj.id,
+    name: proj.name,
+    description: proj.description || '',
+    startDate: proj.startDate,
+    endDate: proj.endDate,
+    departmentId: proj.department.id,
+    departmentName: proj.department.name,
+    status: proj.status,
+    priority: proj.priority,
+    isJoined: false, // TODO: Get from project members API when available
+    createdAt: proj.createdAt
+  }));
+  
   const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +93,12 @@ const ProjectListPage: React.FC = () => {
     loadInitialData();
   }, []);
 
+  // Update local loading and error states based on project store
+  useEffect(() => {
+    setIsLoading(projectsLoading);
+    setError(projectsError);
+  }, [projectsLoading, projectsError]);
+
   const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
     setToast({ message, type, visible: true });
   };
@@ -92,9 +113,9 @@ const ProjectListPage: React.FC = () => {
       setError(null);
       
       // Load departments and projects in parallel
-      const [projectsResponse, departmentsResponse] = await Promise.all([
-        projectService.getMyProjects(),
-        departmentService.getAllDepartments()
+      const [departmentsResponse] = await Promise.all([
+        departmentService.getAllDepartments(),
+        fetchMyProjects() // Use project store to fetch projects
       ]);
       
       // Process departments
@@ -102,25 +123,6 @@ const ProjectListPage: React.FC = () => {
         setDepartments(departmentsResponse.data);
       }
       
-      // Process projects
-      if (projectsResponse.code === 200 && projectsResponse.data) {
-        const transformedProjects: Project[] = projectsResponse.data.map((proj: ProjectResponse) => ({
-          id: proj.id,
-          name: proj.name,
-          description: proj.description || '',
-          startDate: proj.startDate,
-          endDate: proj.endDate,
-          departmentId: proj.department.id,
-          departmentName: proj.department.name,
-          status: proj.status,
-          priority: proj.priority,
-          isJoined: false, // TODO: Get from project members API when available
-          createdAt: proj.createdAt
-        }));
-        setProjects(transformedProjects);
-      } else {
-        setError(projectsResponse.message || 'Không thể tải danh sách dự án.');
-      }
     } catch (err) {
       console.error('Failed to load initial data:', err);
       setError('Không thể tải dữ liệu. Vui lòng thử lại.');
@@ -131,7 +133,7 @@ const ProjectListPage: React.FC = () => {
 
   const handleProjectCreateSuccess = (message: string) => {
     showToast(message, 'success');
-    loadInitialData();
+    fetchMyProjects(); // Refresh projects from store
   };
 
   const handleProjectCreateError = (message: string) => {
@@ -162,7 +164,7 @@ const ProjectListPage: React.FC = () => {
         setShowEditModal(false);
         setSelectedProject(null);
         resetEditForm();
-        await loadInitialData();
+        await fetchMyProjects(); // Refresh projects from store
       } else {
         showToast(response.message || 'Có lỗi xảy ra khi cập nhật dự án', 'error');
       }
@@ -185,7 +187,7 @@ const ProjectListPage: React.FC = () => {
         showToast('Xóa dự án thành công!', 'success');
         setShowDeleteModal(false);
         setSelectedProject(null);
-        await loadInitialData();
+        await fetchMyProjects(); // Refresh projects from store
       } else {
         showToast(response.message || 'Có lỗi xảy ra khi xóa dự án', 'error');
       }
@@ -254,13 +256,13 @@ const ProjectListPage: React.FC = () => {
   };
 
   const canManageProject = (project: Project): boolean => {
-    if (isGlobalManager) return true;
-    if (isDepartmentManager && canAccessAllProjectsInDepartment) return true;
+    if (isGlobalManager()) return true;
+    if (isDepartmentManager() && canAccessAllProjectsInDepartment(project.departmentId)) return true;
     return false;
   };
 
   const canCreateProject = (): boolean => {
-    return isGlobalManager || isDepartmentManager;
+    return isGlobalManager() || isDepartmentManager();
   };
 
   // Filter projects based on search term and filters
@@ -277,7 +279,7 @@ const ProjectListPage: React.FC = () => {
       (filter === 'discover' && !project.isJoined) ||
       (filter === 'active' && project.status === 'IN_PROGRESS') ||
       (filter === 'completed' && project.status === 'COMPLETED') ||
-      (filter === 'paused' && project.status === 'PAUSED');
+      (filter === 'paused' && project.status === 'ON_HOLD');
 
     // Department filter
     const matchesDepartment = departmentFilter === 'all' || project.departmentId === departmentFilter;
@@ -290,7 +292,8 @@ const ProjectListPage: React.FC = () => {
       case 'NOT_STARTED': return 'Chưa bắt đầu';
       case 'IN_PROGRESS': return 'Đang thực hiện';
       case 'COMPLETED': return 'Hoàn thành';
-      case 'PAUSED': return 'Tạm dừng';
+      case 'ON_HOLD': return 'Tạm dừng';
+      case 'CANCELLED': return 'Đã hủy';
       default: return status;
     }
   };
@@ -300,7 +303,8 @@ const ProjectListPage: React.FC = () => {
       case 'NOT_STARTED': return 'bg-gray-100 text-gray-800';
       case 'IN_PROGRESS': return 'bg-blue-100 text-blue-800';
       case 'COMPLETED': return 'bg-green-100 text-green-800';
-      case 'PAUSED': return 'bg-yellow-100 text-yellow-800';
+      case 'ON_HOLD': return 'bg-yellow-100 text-yellow-800';
+      case 'CANCELLED': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };

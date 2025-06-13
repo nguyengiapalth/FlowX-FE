@@ -4,8 +4,6 @@ import { persist } from 'zustand/middleware';
 import type {UserRoleResponse} from "../types/userrole.ts";
 import { isJWTExpired, isValidJWTFormat } from '../utils/jwt.utils';
 import { hasRefreshToken } from '../utils/cookie.utils';
-import userRoleService from "../services/user-role.service.ts";
-import authService from "../services/auth.service.ts";
 import {useProjectStore} from "./project-store.ts";
 
 
@@ -133,7 +131,9 @@ export const useAuthStore = create<AuthState>()(
             // Data fetching
             fetchUserRoles: async () => {
                 try {
-                    const data = await userRoleService.getMyRoles()
+                    // Dynamic import to avoid circular dependency
+                    const userRoleService = await import("../services/user-role.service.ts");
+                    const data = await userRoleService.default.getMyRoles()
                     // Check if response follows FlowXResponse pattern
                     if (data) {
                         if (data.code === 200 || data.code === 201) {
@@ -159,8 +159,14 @@ export const useAuthStore = create<AuthState>()(
                 });
             },
 
-            logout: () => {
-                authService.logout()
+            logout: async () => {
+                try {
+                    // Dynamic import to avoid circular dependency
+                    const authService = await import("../services/auth.service.ts");
+                    await authService.default.logout();
+                } catch (error) {
+                    console.error('Failed to call logout service:', error);
+                }
                 get().clearAuth();
             },
 
