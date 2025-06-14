@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuthStore } from '../stores/auth-store';
 import { useProfileStore } from '../stores/profile-store';
 import { useDepartmentStore } from '../stores/department-store';
@@ -47,7 +47,34 @@ export const DashboardPage: React.FC = () => {
     fetchDepartments();
   }, [fetchMyProjects, fetchAllContents, fetchMyAssignedTasks, fetchDepartments, isGlobalManager]);
 
-  const handleCreateContent = async (request: ContentCreateRequest, files?: File[]) => {
+
+
+  // Memoized recent projects - chỉ tính lại khi myProjects thay đổi
+  const recentProjects = useMemo(() => {
+    return myProjects.slice(0, 3).map((project: any) => ({
+      id: project.id,
+      name: project.name,
+      status: getStatusText(project.status),
+      dueDate: project.endDate ? new Date(project.endDate).toLocaleDateString('vi-VN') : 'Chưa xác định',
+      members: 0, // We don't have member count in the current Project interface
+      priority: project.priority || 'MEDIUM'
+    }));
+  }, [myProjects]);
+
+  // Memoized recent activities - chỉ tính lại khi contents thay đổi
+  const recentActivities = useMemo(() => {
+    return contents.slice(0, 4).map(content => ({
+      id: content.id,
+      user: content.author.fullName,
+      action: 'đã chia sẻ cập nhật',
+      target: `"${content.subtitle || content.body.substring(0, 30)}..."`,
+      time: formatTimeAgo(content.createdAt),
+      avatar: content.author.avatar || '👤'
+    }));
+  }, [contents]);
+
+  // Memoized content upload handler để tránh re-creation
+  const handleCreateContent = useCallback(async (request: ContentCreateRequest, files?: File[]) => {
     try {
       // First, create the content
       const createdContent = await createContent({
@@ -78,9 +105,10 @@ export const DashboardPage: React.FC = () => {
       });
       throw error;
     }
-  };
+  }, [createContent, syncContentFiles]);
 
-  const uploadContentFiles = async (contentId: number, files: File[]) => {
+  // Memoized file upload helper
+  const uploadContentFiles = useCallback(async (contentId: number, files: File[]) => {
     const uploadPromises = files.map(async (file) => {
       try {
         // Step 1: Get presigned upload URL
@@ -120,25 +148,7 @@ export const DashboardPage: React.FC = () => {
     });
 
     await Promise.all(uploadPromises);
-  };
-
-  const recentProjects = myProjects.slice(0, 3).map((project) => ({
-    id: project.id,
-    name: project.name,
-    status: getStatusText(project.status),
-    dueDate: project.endDate ? new Date(project.endDate).toLocaleDateString('vi-VN') : 'Chưa xác định',
-    members: 0, // We don't have member count in the current Project interface
-    priority: project.priority || 'MEDIUM'
-  }));
-
-  const recentActivities = contents.slice(0, 4).map(content => ({
-    id: content.id,
-    user: content.author.fullName,
-    action: 'đã chia sẻ cập nhật',
-    target: `"${content.subtitle || content.body.substring(0, 30)}..."`,
-    time: formatTimeAgo(content.createdAt),
-    avatar: content.author.avatar || '👤'
-  }));
+  }, []);
 
   return (
     <>

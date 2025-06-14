@@ -52,6 +52,13 @@ export const useAutoRefresh = ({
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [pauseOnBlur]);
 
+  // Sử dụng ref cho onError để tránh re-create callback
+  const onErrorRef = useRef(onError);
+  
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
   // Hàm refresh dữ liệu - stable callback
   const refresh = useCallback(async () => {
     if (!onRefreshRef.current) return;
@@ -67,7 +74,7 @@ export const useAutoRefresh = ({
           setLastRefreshTime(new Date());
         } catch (error) {
           console.error('Auto refresh error:', error);
-          onError?.(error as Error);
+          onErrorRef.current?.(error as Error);
         } finally {
           setIsRefreshing(false);
         }
@@ -75,7 +82,7 @@ export const useAutoRefresh = ({
       
       return true; // Set isRefreshing = true
     });
-  }, [onError]);
+  }, []); // Không có dependencies - hoàn toàn stable
 
   // Bắt đầu auto refresh
   const start = useCallback(() => {
@@ -123,14 +130,41 @@ export const useAutoRefresh = ({
 
   // Khởi động auto refresh khi component mount
   useEffect(() => {
-    if (enabled) {
-      start();
+    if (!enabled) return;
+
+    console.log(`[AutoRefresh] Setting up auto refresh - interval: ${interval}ms, enabled: ${enabled}`);
+
+    // Khởi động interval trực tiếp thay vì gọi start()
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      console.log(`[AutoRefresh] Cleared existing interval`);
     }
 
+    setIsActive(true);
+    
+    // Refresh ngay lập tức
+    refresh();
+
+    // Thiết lập interval
+    intervalRef.current = setInterval(() => {
+      console.log(`[AutoRefresh] Interval tick - hidden: ${document.hidden}, enabled: ${enabledRef.current}`);
+      if (pauseOnBlur && document.hidden) return;
+      if (enabledRef.current) {
+        refresh();
+      }
+    }, interval);
+
+    console.log(`[AutoRefresh] Interval set with ID: ${intervalRef.current}`);
+
     return () => {
-      stop();
+      console.log(`[AutoRefresh] Cleaning up interval: ${intervalRef.current}`);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      setIsActive(false);
     };
-  }, [enabled, interval, pauseOnBlur]); // Chỉ depend vào primitive values
+  }, [enabled, interval, pauseOnBlur, refresh]); // refresh giờ đã stable
 
   // Tạm dừng/tiếp tục khi tab visibility thay đổi - đơn giản hóa
   useEffect(() => {
@@ -140,7 +174,7 @@ export const useAutoRefresh = ({
       start();
     }
     // Không cần xử lý case !isVisible vì đã handle trong setInterval
-  }, [isVisible, pauseOnBlur, enabled, isActive]);
+  }, [isVisible, pauseOnBlur, enabled, isActive, start]);
 
   return {
     isRefreshing,

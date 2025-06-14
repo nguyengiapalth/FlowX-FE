@@ -48,49 +48,62 @@ export const useTaskAutoRefresh = ({
     statusRef.current = status;
   }, [refreshType, projectId, departmentId, status]);
 
-  // Tạo callback refresh stable
+  // Sử dụng refs để tránh dependency changes gây ra re-create callback
+  const fetchAllTasksRef = useRef(fetchAllTasks);
+  const fetchMyAssignedTasksRef = useRef(fetchMyAssignedTasks);
+  const fetchMyCreatedTasksRef = useRef(fetchMyCreatedTasks);
+  const fetchTasksByProjectRef = useRef(fetchTasksByProject);
+  const fetchTasksByDepartmentRef = useRef(fetchTasksByDepartment);
+  const fetchTasksByStatusRef = useRef(fetchTasksByStatus);
+
+  // Cập nhật refs khi store functions thay đổi
+  useEffect(() => {
+    fetchAllTasksRef.current = fetchAllTasks;
+    fetchMyAssignedTasksRef.current = fetchMyAssignedTasks;
+    fetchMyCreatedTasksRef.current = fetchMyCreatedTasks;
+    fetchTasksByProjectRef.current = fetchTasksByProject;
+    fetchTasksByDepartmentRef.current = fetchTasksByDepartment;
+    fetchTasksByStatusRef.current = fetchTasksByStatus;
+  }, [fetchAllTasks, fetchMyAssignedTasks, fetchMyCreatedTasks, fetchTasksByProject, fetchTasksByDepartment, fetchTasksByStatus]);
+
+  // Tạo callback refresh stable - không có dependencies
   const onRefresh = useCallback(async () => {
     try {
+      console.log(`[TaskAutoRefresh] Refreshing tasks - type: ${refreshTypeRef.current}, time: ${new Date().toLocaleTimeString()}`);
       switch (refreshTypeRef.current) {
         case 'all':
-          await fetchAllTasks();
+          await fetchAllTasksRef.current();
           break;
         case 'assigned':
-          await fetchMyAssignedTasks();
+          await fetchMyAssignedTasksRef.current();
           break;
         case 'created':
-          await fetchMyCreatedTasks();
+          await fetchMyCreatedTasksRef.current();
           break;
         case 'project':
           if (projectIdRef.current !== undefined) {
-            await fetchTasksByProject(projectIdRef.current);
+            await fetchTasksByProjectRef.current(projectIdRef.current);
           }
           break;
         case 'department':
           if (departmentIdRef.current !== undefined) {
-            await fetchTasksByDepartment(departmentIdRef.current);
+            await fetchTasksByDepartmentRef.current(departmentIdRef.current);
           }
           break;
         case 'status':
           if (statusRef.current) {
-            await fetchTasksByStatus(statusRef.current);
+            await fetchTasksByStatusRef.current(statusRef.current);
           }
           break;
         default:
-          await fetchAllTasks();
+          await fetchAllTasksRef.current();
       }
+      console.log(`[TaskAutoRefresh] Refresh completed - type: ${refreshTypeRef.current}`);
     } catch (error) {
       console.error('Task refresh error:', error);
       throw error;
     }
-  }, [
-    fetchAllTasks,
-    fetchMyAssignedTasks,
-    fetchMyCreatedTasks,
-    fetchTasksByProject,
-    fetchTasksByDepartment,
-    fetchTasksByStatus
-  ]);
+  }, []); // Empty dependency array - stable callback
 
   const autoRefresh = useAutoRefresh({
     enabled,

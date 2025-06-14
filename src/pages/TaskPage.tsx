@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigationActions } from '../utils/navigation.utils';
 import { useProfileStore } from '../stores/profile-store';
 import { useTaskStore } from '../stores/task-store';
@@ -29,7 +29,7 @@ const TaskPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'my-tasks' | 'assigned'>('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [refreshInterval, setRefreshInterval] = useState(3600000); // 60 phút
+  const [refreshInterval, setRefreshInterval] = useState(300000); // 5 phút để test, sau có thể tăng lên
 
   // Auto refresh cho tasks - memoize refreshType để tránh re-render
   const refreshType = useMemo(() => {
@@ -46,11 +46,7 @@ const TaskPage: React.FC = () => {
     refreshType
   });
 
-  useEffect(() => {
-    fetchTasks();
-  }, [activeTab]);
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       switch (activeTab) {
         case 'my-tasks':
@@ -67,10 +63,14 @@ const TaskPage: React.FC = () => {
       console.error('Failed to fetch tasks:', error);
       setToast({ message: 'Có lỗi xảy ra khi tải danh sách task', type: 'error' });
     }
-  };
+  }, [activeTab, fetchMyAssignedTasks, fetchMyCreatedTasks, fetchAllTasks]);
 
-  // Get current tasks based on active tab
-  const getCurrentTasks = () => {
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
+  // Memoized current tasks based on active tab - để tránh re-render không cần thiết
+  const currentTasks = useMemo(() => {
     switch (activeTab) {
       case 'my-tasks':
         return myAssignedTasks;
@@ -79,37 +79,111 @@ const TaskPage: React.FC = () => {
       default:
         return tasks;
     }
-  };
+  }, [activeTab, tasks, myAssignedTasks, myCreatedTasks]);
 
-  const currentTasks = getCurrentTasks();
-
-  const handleTaskUpdate = (updatedTask: TaskResponse) => {
-    updateTaskInList(updatedTask);
-    setToast({ message: 'Cập nhật task thành công!', type: 'success' });
-  };
-
-  const handleTaskDelete = (taskId: number) => {
-    removeTask(taskId);
-    setToast({ message: 'Xóa task thành công!', type: 'success' });
-  };
-
-  const handleTaskCreated = async (newTask: TaskResponse) => {
-    // The store's createTask method will automatically add to the appropriate lists
-    setToast({ message: 'Tạo task thành công!', type: 'success' });
-    // Refresh the current view
-    await fetchTasks();
-  };
-
-  const getTaskStats = () => {
+  // Memoized task statistics - chỉ tính lại khi currentTasks thay đổi
+  const stats = useMemo(() => {
     return {
       total: currentTasks.length,
       inProgress: currentTasks.filter(t => t.status === 'IN_PROGRESS').length,
       completed: currentTasks.filter(t => t.status === 'COMPLETED').length,
       toDo: currentTasks.filter(t => t.status === 'TO_DO').length
     };
-  };
+  }, [currentTasks]);
 
-  const stats = getTaskStats();
+  // Memoized sorted tasks - sắp xếp theo priority và due date
+  const sortedTasks = useMemo(() => {
+    return [...currentTasks].sort((a, b) => {
+      // Priority order: HIGH -> MEDIUM -> LOW với fallback cho các giá trị khác
+      const priorityOrder: Record<string, number> = { 
+        'CRITICAL': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 
+      };
+      const priorityDiff = (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+      
+      if (priorityDiff !== 0) return priorityDiff;
+      
+      // Nếu priority giống nhau, sắp xếp theo due date (task sắp hết hạn lên trước)
+      if (a.dueDate && b.dueDate) {
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      }
+      if (a.dueDate) return -1;
+      if (b.dueDate) return 1;
+      
+      // Cuối cùng sắp xếp theo created date (mới nhất lên trước)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [currentTasks]);
+
+  // Memoized overdue tasks
+  const overdueTasks = useMemo(() => {
+    const now = new Date();
+    return currentTasks.filter(task => 
+      task.dueDate && 
+      new Date(task.dueDate) < now && 
+      task.status !== 'COMPLETED'
+    );
+  }, [currentTasks]);
+
+  // Utility functions memoized để tránh re-creation
+  const getStatusColor = useCallback((status: string) => {
+    switch (status) {
+      case 'TO_DO': return 'bg-gray-100 text-gray-800';
+      case 'IN_PROGRESS': return 'bg-blue-100 text-blue-800';
+      case 'COMPLETED': return 'bg-green-100 text-green-800';
+      case 'CANCELLED': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  }, []);
+
+  const getStatusText = useCallback((status: string) => {
+    switch (status) {
+      case 'TO_DO': return 'Chưa bắt đầu';
+      case 'IN_PROGRESS': return 'Đang thực hiện';
+      case 'COMPLETED': return 'Hoàn thành';
+      case 'CANCELLED': return 'Đã hủy';
+      default: return status;
+    }
+  }, []);
+
+  const getPriorityColor = useCallback((priority: string) => {
+    switch (priority?.toLowerCase()) {
+      case 'low': return 'text-green-600';
+      case 'medium': return 'text-yellow-600';
+      case 'high': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  }, []);
+
+  const getPriorityText = useCallback((priority: string) => {
+    switch (priority?.toLowerCase()) {
+      case 'low': return 'Thấp';
+      case 'medium': return 'Trung bình';
+      case 'high': return 'Cao';
+      default: return priority || 'Chưa xác định';
+    }
+  }, []);
+
+  const formatDate = useCallback((dateString?: string) => {
+    if (!dateString) return 'Chưa xác định';
+    return new Date(dateString).toLocaleDateString('vi-VN');
+  }, []);
+
+  const handleTaskUpdate = useCallback((updatedTask: TaskResponse) => {
+    updateTaskInList(updatedTask);
+    setToast({ message: 'Cập nhật task thành công!', type: 'success' });
+  }, [updateTaskInList]);
+
+  const handleTaskDelete = useCallback((taskId: number) => {
+    removeTask(taskId);
+    setToast({ message: 'Xóa task thành công!', type: 'success' });
+  }, [removeTask]);
+
+  const handleTaskCreated = useCallback(async (newTask: TaskResponse) => {
+    // The store's createTask method will automatically add to the appropriate lists
+    setToast({ message: 'Tạo task thành công!', type: 'success' });
+    // Refresh the current view
+    await fetchTasks();
+  }, [fetchTasks]);
 
   return (
     <>
@@ -317,50 +391,7 @@ const TaskPage: React.FC = () => {
             </div>
 
               {/* Table Body */}
-              {currentTasks.map((task) => {
-                const getStatusColor = (status: string) => {
-                  switch (status) {
-                    case 'TO_DO': return 'bg-gray-100 text-gray-800';
-                    case 'IN_PROGRESS': return 'bg-blue-100 text-blue-800';
-                    case 'COMPLETED': return 'bg-green-100 text-green-800';
-                    case 'CANCELLED': return 'bg-red-100 text-red-800';
-                    default: return 'bg-gray-100 text-gray-800';
-                  }
-                };
-
-                const getStatusText = (status: string) => {
-                  switch (status) {
-                    case 'TO_DO': return 'Chưa bắt đầu';
-                    case 'IN_PROGRESS': return 'Đang thực hiện';
-                    case 'COMPLETED': return 'Hoàn thành';
-                    case 'CANCELLED': return 'Đã hủy';
-                    default: return status;
-                  }
-                };
-
-                const getPriorityColor = (priority: string) => {
-                  switch (priority?.toLowerCase()) {
-                    case 'low': return 'text-green-600';
-                    case 'medium': return 'text-yellow-600';
-                    case 'high': return 'text-red-600';
-                    default: return 'text-gray-600';
-                  }
-                };
-
-                const getPriorityText = (priority: string) => {
-                  switch (priority?.toLowerCase()) {
-                    case 'low': return 'Thấp';
-                    case 'medium': return 'Trung bình';
-                    case 'high': return 'Cao';
-                    default: return priority || 'Chưa xác định';
-                  }
-                };
-
-                const formatDate = (dateString?: string) => {
-                  if (!dateString) return 'Chưa xác định';
-                  return new Date(dateString).toLocaleDateString('vi-VN');
-                };
-
+              {sortedTasks.map((task) => {
                 const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED';
                 const canModify = user?.id === task.assigner?.id || user?.id === task.assignee?.id;
 
