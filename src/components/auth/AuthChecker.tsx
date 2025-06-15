@@ -53,7 +53,7 @@ export const AuthChecker: React.FC<AuthCheckerProps> = ({ children }) => {
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-200 via-violet-200 to-pink-200 rounded-xl flex items-center justify-center shadow-lg">
-              <img src="/vite.svg" alt="FlowX Logo" className="w-12 h-12" />
+              <img src="/flowx.svg" alt="FlowX Logo" className="w-12 h-12" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">FlowX</h1>

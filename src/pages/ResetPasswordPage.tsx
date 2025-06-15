@@ -150,7 +150,7 @@ export const ResetPasswordPage: React.FC = () => {
                             <div className="text-center mb-8">
                                 <div className="flex items-center justify-center mb-4">
                                     <div className="w-12 h-12 bg-gradient-to-br from-blue-200 via-violet-200 to-pink-200 rounded-xl flex items-center justify-center shadow-lg">
-                                        <img src="/vite.svg" alt="FlowX Logo" className="w-10 h-10" />
+                                        <img src="/flowx.svg" alt="FlowX Logo" className="w-10 h-10" />
                                     </div>
                                     <h1 className="ml-3 text-2xl font-bold gradient-primary-text">FlowX</h1>
                                 </div>

@@ -64,7 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="flex items-center">
               <Link to="/newsfeed" className="flex-shrink-0 flex items-center">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-200 via-violet-200 to-pink-200 rounded-lg flex items-center justify-center shadow-md">
-                  <img src="/vite.svg" alt="FlowX Logo" className="w-6 h-6" />
+                  <img src="/flowx.svg" alt="FlowX Logo" className="w-6 h-6" />
                 </div>
                 <h1 className="ml-2 text-xl font-bold text-gray-900">FlowX</h1>
               </Link>

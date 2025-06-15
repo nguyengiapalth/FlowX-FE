@@ -189,7 +189,7 @@ export const LoginPage: React.FC = () => {
                     <div className="text-center mb-8">
                         <div className="flex items-center justify-center mb-4">
                             <div className="w-14 h-14 bg-gradient-to-br from-blue-200 via-violet-200 to-pink-200 rounded-lg flex items-center justify-center shadow-md">
-                                <img src="/vite.svg" alt="FlowX Logo" className="w-12 h-12" />
+                                <img src="/flowx.svg" alt="FlowX Logo" className="w-12 h-12" />
                             </div>
                             <h1 className="ml-3 text-2xl font-bold text-gray-900">FlowX</h1>
                         </div>
