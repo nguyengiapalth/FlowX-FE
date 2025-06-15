@@ -172,10 +172,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onCli
             <div className="flex items-start space-x-3">
                 {/* Icon based on entity type */}
                 <div className={`flex-shrink-0 w-2 h-2 mt-2 rounded-full ${
-                    !notification.isRead ? 'bg-primary-500' : 'bg-gray-300'
+                    !notification.isRead ? 'bg-primary-500' : 'gradient-primary-soft'
                 }`} />
                 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 bg-gradient-primary-soft">
                     <p className={`text-sm font-medium ${
                         !notification.isRead ? 'text-gray-900' : 'text-gray-600'
                     }`}>
