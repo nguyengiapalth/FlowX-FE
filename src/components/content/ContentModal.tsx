@@ -81,13 +81,7 @@ export const ContentModal: React.FC<ContentModalProps> = ({
     await Promise.all(uploadPromises);
   };
 
-  const syncContentFiles = async (contentId: number) => {
-    try {
-      await contentService.syncContentFiles(contentId);
-    } catch (error) {
-      console.warn('Failed to sync content files:', error);
-    }
-  };
+
 
   const handleCreateReply = async (request: ContentCreateRequest, files?: File[]) => {
     if (!content) return;
@@ -104,9 +98,7 @@ export const ContentModal: React.FC<ContentModalProps> = ({
       // If there are files, upload them
       if (files && files.length > 0 && createdReply.id) {
         await uploadContentFiles(createdReply.id, files);
-        
-        // Sync the content to update hasFile flag
-        await syncContentFiles(createdReply.id);
+        // hasFile flag will be synced automatically via events
       }
       
       // Reload content to get updated replies

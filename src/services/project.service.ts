@@ -6,6 +6,7 @@ import type {
     ProjectUpdateRequest 
 } from '../types/project';
 import type { ProjectStatus } from '../types/enums.ts';
+import type { ProjectMemberResponse } from '../types/project';
 
 class ProjectService {
     /**
@@ -114,12 +115,11 @@ class ProjectService {
     }
 
     /**
-     * Update project background
+     * Get project members by project ID
      */
-    async updateProjectBackground(id: number, background: string): Promise<FlowXResponse<ProjectResponse>> {
-        const response = await apiService.instance.put<FlowXResponse<ProjectResponse>>(
-            `/api/project/update-background/${id}`,
-            background
+    async getProjectMembers(projectId: number): Promise<FlowXResponse<ProjectMemberResponse[]>> {
+        const response = await apiService.instance.get<FlowXResponse<ProjectMemberResponse[]>>(
+            `/api/project/members/${projectId}`
         );
         return response.data;
     }

@@ -21,7 +21,7 @@ export const ProfilePage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser, isLoading, error, fetchProfile, updateProfile } = useProfileStore();
   const { userRoles } = useAuthStore();
-  const { createContent, syncContentFiles } = useContentStore();
+  const { createContent } = useContentStore();
 
   // Determine if viewing own profile or someone else's
   const userIdNum = userId ? parseInt(userId) : (currentUser?.id || 0);
@@ -126,10 +126,8 @@ export const ProfilePage: React.FC = () => {
       // If there are files, upload them
       if (files && files.length > 0 && createdContent.id) {
         await uploadContentFiles(createdContent.id, files);
-
-              // Sync the content to update hasFile flag
-      await syncContentFiles(createdContent.id);
-    }
+        // hasFile flag will be synced automatically via events
+      }
 
     // Force refresh ContentList by updating key with a small delay
     setTimeout(() => {

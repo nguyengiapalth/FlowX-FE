@@ -38,7 +38,7 @@ interface TaskState {
     markTaskCompleted: (id: number) => Promise<TaskResponse>;
     markTaskIncomplete: (id: number) => Promise<TaskResponse>;
     deleteTask: (id: number) => Promise<void>;
-    syncTaskFiles: (id: number) => Promise<void>;
+
     
     // Utility
     addTask: (task: TaskResponse) => void;
@@ -244,7 +244,7 @@ export const useTaskStore = create<TaskState>()(
                     
                     const response = await taskService.createTask(request);
                     
-                    if (response.code === 200 && response.data) {
+                    if ((response.code === 200 || response.code === 201) && response.data) {
                         const newTask = response.data;
                         set((state) => ({
                             tasks: [newTask, ...state.tasks],
@@ -389,26 +389,7 @@ export const useTaskStore = create<TaskState>()(
                 }
             },
 
-            syncTaskFiles: async (id: number) => {
-                const { accessToken } = useAuthStore.getState();
-                if (!accessToken) {
-                    set({ error: 'No access token' });
-                    throw new Error('No access token');
-                }
-
-                try {
-                    const response = await taskService.syncTaskFiles(id);
-                    if (response.code !== 200) {
-                        throw new Error(response.message || 'Failed to sync task files');
-                    }
-                } catch (error: any) {
-                    const errorMessage = error.response?.data?.message || error.message || 'Failed to sync task files';
-                    set({ error: errorMessage });
-                    throw error;
-                }
-            },
-
-            // Utility
+            // Utility methods
             addTask: (task) => {
                 set((state) => ({
                     tasks: [task, ...state.tasks]

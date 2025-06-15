@@ -72,6 +72,20 @@ export const UserAvatarName: React.FC<UserAvatarNameProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  // Early return if user is null/undefined
+  if (!user) {
+    return (
+      <div className="flex items-center space-x-2 text-gray-500">
+        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+        <span className="text-sm">Không có thông tin</span>
+      </div>
+    );
+  }
+
+  // Safe get fullName with fallback
+  const userName = user.fullName || 'Unknown User';
+  const userInitial = userName.charAt(0).toUpperCase() || '?';
+
   const handleClick = () => {
     if (clickable && user.id) {
       navigate(`/profile/${user.id}`);
@@ -99,13 +113,13 @@ export const UserAvatarName: React.FC<UserAvatarNameProps> = ({
           {user.avatar ? (
             <img
               src={user.avatar}
-              alt={user.fullName}
+              alt={userName}
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${getAvatarGradient(user.fullName)} flex items-center justify-center`}>
+            <div className={`w-full h-full bg-gradient-to-br ${getAvatarGradient(userName)} flex items-center justify-center`}>
               <span className="text-white font-bold">
-                {user.fullName.charAt(0).toUpperCase()}
+                {userInitial}
               </span>
             </div>
           )}
@@ -120,7 +134,7 @@ export const UserAvatarName: React.FC<UserAvatarNameProps> = ({
       {/* User Info - aligned to top */}
       <div className={`min-w-0 flex-1 ${textAlignClasses} ${nameClassName}`}>
         <p className={`font-medium text-gray-900 ${config.text} ${clickable ? 'group-hover:text-blue-600' : ''} transition-colors truncate leading-tight`}>
-          {user.fullName}
+          {userName}
         </p>
         
         {showPosition && user.position && (

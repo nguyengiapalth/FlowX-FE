@@ -3,7 +3,6 @@ import { ImageCropper } from '../utils/ImageCropper';
 import { useContentStore } from '../../stores/content-store';
 import { X, Plus, Upload } from 'lucide-react';
 import { useProfileStore } from '../../stores/profile-store';
-import userService from '../../services/user.service';
 import fileService from '../../services/file.service';
 import contentService from '../../services/content.service';
 import type { ContentCreateRequest } from '../../types/content';
@@ -27,7 +26,7 @@ export const AvatarBackgroundModals: React.FC<AvatarBackgroundModalsProps> = ({
   onError
 }) => {
   const { user, fetchProfile } = useProfileStore();
-  const { createContent, syncContentFiles } = useContentStore();
+  const { createContent } = useContentStore();
 
   // States
   const [avatar, setAvatar] = useState<string>('');
@@ -148,6 +147,7 @@ export const AvatarBackgroundModals: React.FC<AvatarBackgroundModalsProps> = ({
 
     setIsUpdatingAvatar(true);
     try {
+      // Step 1: Create content with special subtitle that triggers avatar update event
       const postRequest: ContentCreateRequest = {
         subtitle: 'đã cập nhật ảnh đại diện',
         body: avatarPostBody.trim(),
@@ -158,23 +158,16 @@ export const AvatarBackgroundModals: React.FC<AvatarBackgroundModalsProps> = ({
 
       let createdContent = await createContent(postRequest);
 
+      // Step 2: Upload file - this will trigger the avatar update event automatically
       if (createdContent.id) {
         await uploadContentFiles(createdContent.id, [avatarFile]);
-        await syncContentFiles(createdContent.id);
+        // Backend will automatically sync avatar through AvatarUpdatedEvent
       }
 
-      const reload = await contentService.getContentById(createdContent.id);
-      if (!reload.data) {
-        throw new Error('Không thể tải lại nội dung đã tạo');
-      }
-      createdContent = reload.data;
-
-             if (createdContent.files && createdContent.files.length > 0 && createdContent.files[0].objectKey) {
-         await userService.updateMyAvatar(createdContent.files[0].objectKey);
-         await fetchProfile();
-       } else {
-         throw new Error('Không thể cập nhật ảnh đại diện: Không tìm thấy file');
-       }
+      // Step 3: Wait a moment for backend processing then refresh profile
+      setTimeout(async () => {
+        await fetchProfile();
+      }, 200);
 
       setAvatar('');
       setAvatarFile(null);
@@ -195,6 +188,7 @@ export const AvatarBackgroundModals: React.FC<AvatarBackgroundModalsProps> = ({
 
     setIsUpdatingBackground(true);
     try {
+      // Step 1: Create content with special subtitle that triggers background update event
       const postRequest: ContentCreateRequest = {
         subtitle: 'đã thay đổi ảnh bìa',
         body: backgroundPostBody.trim(),
@@ -205,23 +199,16 @@ export const AvatarBackgroundModals: React.FC<AvatarBackgroundModalsProps> = ({
 
       let createdContent = await createContent(postRequest);
 
+      // Step 2: Upload file - this will trigger the background update event automatically
       if (createdContent.id) {
         await uploadContentFiles(createdContent.id, [backgroundFile]);
-        await syncContentFiles(createdContent.id);
+        // Backend will automatically sync background through BackgroundUpdatedEvent
       }
 
-      const reload = await contentService.getContentById(createdContent.id);
-      if (!reload.data) {
-        throw new Error('Không thể tải lại nội dung đã tạo');
-      }
-      createdContent = reload.data;
-
-             if (createdContent.files && createdContent.files.length > 0 && createdContent.files[0].objectKey) {
-         await userService.updateMyBackground(createdContent.files[0].objectKey);
-         await fetchProfile();
-       } else {
-         throw new Error('Không thể cập nhật ảnh bìa: Không tìm thấy file');
-       }
+      // Step 3: Wait a moment for backend processing then refresh profile
+      setTimeout(async () => {
+        await fetchProfile();
+      }, 200);
 
       setBackground('');
       setBackgroundFile(null);

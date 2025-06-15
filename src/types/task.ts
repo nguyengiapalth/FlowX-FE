@@ -13,7 +13,6 @@ export interface TaskResponse {
     startDate?: string; // ISO date string
     dueDate?: string; // ISO date string
     completedDate?: string; // ISO date string
-    progress?: number;
     hasFiles?: boolean;
     createdAt: string; // ISO datetime string
     updatedAt: string; // ISO datetime string
@@ -31,7 +30,6 @@ export interface TaskCreateRequest {
     assigneeId: number;
     startDate?: string; // ISO date string
     dueDate?: string; // ISO date string
-    progress?: number;
     hasFiles?: boolean;
     status?: TaskStatus;
     priority?: PriorityLevel;
@@ -46,7 +44,6 @@ export interface TaskUpdateRequest {
     startDate?: string; // ISO date string
     dueDate?: string; // ISO date string
     completedDate?: string; // ISO date string
-    progress?: number;
     hasFiles?: boolean;
     status?: TaskStatus;
     priority?: PriorityLevel;

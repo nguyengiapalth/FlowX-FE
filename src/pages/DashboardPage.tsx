@@ -7,7 +7,7 @@ import { useContentStore } from '../stores/content-store';
 import { useTaskStore } from '../stores/task-store';
 import { ExpandableCreateForm } from '../index.ts';
 import SimpleToast from '../components/utils/SimpleToast';
-import { LocalStorageTracker } from '../components/LocalStorageTracker';
+
 import { useNavigationActions } from '../utils/navigation.utils';
 import type { ContentCreateRequest } from '../types/content';
 import type { FileCreateRequest } from '../types/file';
@@ -35,7 +35,7 @@ export const DashboardPage: React.FC = () => {
   const { user } = useProfileStore();
   const { departments, fetchDepartments } = useDepartmentStore();
   const { myProjects, fetchMyProjects } = useProjectStore();
-  const { createContent, syncContentFiles, contents, fetchAllContents } = useContentStore();
+  const { createContent, contents, fetchAllContents } = useContentStore();
   const { fetchMyAssignedTasks } = useTaskStore();
   
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -89,8 +89,7 @@ export const DashboardPage: React.FC = () => {
       // If there are files, upload them
       if (files && files.length > 0 && createdContent.id) {
         await uploadContentFiles(createdContent.id, files);
-        // Sync the content to update hasFile flag
-        await syncContentFiles(createdContent.id);
+        // hasFile flag will be synced automatically via events
       }
       
       setToast({ 
@@ -105,7 +104,7 @@ export const DashboardPage: React.FC = () => {
       });
       throw error;
     }
-  }, [createContent, syncContentFiles]);
+  }, [createContent]);
 
   // Memoized file upload helper
   const uploadContentFiles = useCallback(async (contentId: number, files: File[]) => {
@@ -483,10 +482,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* LocalStorage Tracker */}
-        <div className="mb-8">
-          <LocalStorageTracker />
-        </div>
+
       </main>
     </>
   );

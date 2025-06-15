@@ -22,7 +22,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
   onDelete,
   className = ''
 }) => {
-  const { currentTask, fetchTaskById, updateTask, deleteTask, updateTaskStatus, syncTaskFiles, isLoading } = useTaskStore();
+  const { currentTask, fetchTaskById, updateTask, deleteTask, updateTaskStatus, isLoading } = useTaskStore();
   const { user } = useProfileStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<TaskUpdateRequest>({});
@@ -40,7 +40,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
         description: currentTask.description,
         dueDate: currentTask.dueDate?.split('T')[0],
         startDate: currentTask.startDate?.split('T')[0],
-        progress: currentTask.progress,
+
         priority: currentTask.priority,
         status: currentTask.status
       });
@@ -153,15 +153,6 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
   const handleSaveEdit = async () => {
     try {
       const updatedTask = await updateTask(currentTask.id, editForm);
-      
-      // Auto-sync files after update if files might be affected
-      if (editForm.hasFiles !== undefined) {
-        try {
-          await syncTaskFiles(currentTask.id);
-        } catch (syncError) {
-          console.error('Failed to sync files after update:', syncError);
-        }
-      }
       
       onUpdate?.(updatedTask);
       setIsEditing(false);
@@ -323,76 +314,34 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
               )}
             </div>
 
-            {/* Progress */}
-            {(currentTask.progress !== undefined && currentTask.progress !== null) && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Tiến độ</h3>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">Hoàn thành</span>
-                    <span className="text-sm font-semibold text-gray-900">{currentTask.progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${currentTask.progress}%` }}
-                    ></div>
-                  </div>
-                  {isEditing && (
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={editForm.progress || 0}
-                      onChange={(e) => setEditForm({ ...editForm, progress: parseInt(e.target.value) })}
-                      className="w-full mt-3"
-                    />
-                  )}
-                </div>
-              </div>
-            )}
+
 
             {/* Files */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold text-gray-900">Files đính kèm</h3>
-                {canModify && (
-                  <button
-                    onClick={async () => {
-                      try {
-                        await syncTaskFiles(currentTask.id);
-                        // Refresh task data after sync
-                        fetchTaskById(currentTask.id);
-                      } catch (error) {
-                        console.error('Failed to sync task files:', error);
-                      }
-                    }}
-                    className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    title="Đồng bộ trạng thái files"
-                  >
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Sync Files
-                  </button>
-                )}
               </div>
 
               {/* Show hasFiles flag status */}
               <div className="mb-3 p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Trạng thái files:</span>
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    currentTask.hasFiles 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {currentTask.hasFiles ? 'Có files' : 'Không có files'}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      currentTask.hasFiles 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {currentTask.hasFiles ? 'Có files' : 'Không có files'}
+                    </span>
+                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded" title="Tự động đồng bộ">
+                      Auto-sync
+                    </span>
+                  </div>
                 </div>
                 {currentTask.files && currentTask.files.length > 0 && (
                   <div className="text-xs text-gray-500 mt-1">
-                    {currentTask.files.length} file(s) đính kèm
+                    {currentTask.files.length} file(s) đính kèm - Đồng bộ tự động
                   </div>
                 )}
               </div>
@@ -401,16 +350,9 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
                 taskId={currentTask.id}
                 canUpload={canModify}
                 files={currentTask.files || []}
-                onFilesUpdated={async () => {
-                  // Sync files after upload/delete, then refresh task data
-                  try {
-                    await syncTaskFiles(currentTask.id);
-                    fetchTaskById(currentTask.id);
-                  } catch (error) {
-                    console.error('Failed to sync after file update:', error);
-                    // Still refresh even if sync fails
-                    fetchTaskById(currentTask.id);
-                  }
+                onFilesUpdated={() => {
+                  // Just refresh task data - hasFiles flag will be synced automatically via events
+                  fetchTaskById(currentTask.id);
                 }}
               />
             </div>

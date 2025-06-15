@@ -3,7 +3,6 @@ import { ImageCropper } from '../utils/ImageCropper';
 import { useContentStore } from '../../stores/content-store';
 import { X, Plus, Upload, Loader2 } from 'lucide-react';
 import fileService from '../../services/file.service';
-import contentService from '../../services/content.service';
 import type { ContentCreateRequest } from '../../types/content';
 import type { FileCreateRequest } from '../../types/file';
 import type { ContentTargetType } from '../../types/enums.ts';
@@ -17,7 +16,7 @@ interface BackgroundModalProps {
   targetType: ContentTargetType;
   targetId: number;
   targetName: string;
-  onBackgroundUpdate: (objectKey: string) => Promise<void>;
+  onBackgroundUpdate?: () => Promise<void>; // Optional callback for refreshing data
 }
 
 export const BackgroundModal: React.FC<BackgroundModalProps> = ({
@@ -31,7 +30,7 @@ export const BackgroundModal: React.FC<BackgroundModalProps> = ({
   targetName,
   onBackgroundUpdate
 }) => {
-  const { createContent, syncContentFiles } = useContentStore();
+  const { createContent } = useContentStore();
 
   // States
   const [background, setBackground] = useState<string>('');
@@ -140,7 +139,7 @@ export const BackgroundModal: React.FC<BackgroundModalProps> = ({
 
     setIsUpdating(true);
     try {
-      // Step 1: Create post with background file
+      // Step 1: Create content with special subtitle that triggers background update event
       const postRequest: ContentCreateRequest = {
         subtitle: getSubtitle(),
         body: postBody.trim(),
@@ -151,24 +150,17 @@ export const BackgroundModal: React.FC<BackgroundModalProps> = ({
 
       let createdContent = await createContent(postRequest);
 
-      // Step 2: Upload file
+      // Step 2: Upload file - this will trigger the background update event automatically
       if (createdContent.id) {
         await uploadContentFiles(createdContent.id, [backgroundFile]);
-        await syncContentFiles(createdContent.id);
+        // Backend will automatically sync background through BackgroundUpdatedEvent
       }
 
-      // Step 3: Reload content to get objectKey
-      const reload = await contentService.getContentById(createdContent.id);
-      if (!reload.data) {
-        throw new Error('Không thể tải lại nội dung đã tạo');
-      }
-      createdContent = reload.data;
-
-      // Step 4: Update background via callback
-      if (createdContent.files && createdContent.files.length > 0 && createdContent.files[0].objectKey) {
-        await onBackgroundUpdate(createdContent.files[0].objectKey);
-      } else {
-        throw new Error('Không thể cập nhật ảnh bìa: Không tìm thấy file');
+      // Step 3: Wait a moment for backend processing then refresh if callback provided
+      if (onBackgroundUpdate) {
+        setTimeout(async () => {
+          await onBackgroundUpdate();
+        }, 200);
       }
 
       handleClose();

@@ -2,8 +2,7 @@ import { apiService } from './api.service';
 import type { FlowXResponse } from '../types/common';
 import type { 
     ProjectMemberResponse, 
-    ProjectMemberCreateRequest, 
-    ProjectMemberUpdateRequest 
+    ProjectMemberCreateRequest
 } from '../types/project';
 import type { MemberStatus, RoleDefault } from '../types/enums.ts';
 
@@ -15,6 +14,29 @@ class ProjectMemberService {
         const response = await apiService.instance.post<FlowXResponse<ProjectMemberResponse>>(
             '/api/project-member/add',
             request
+        );
+        return response.data;
+    }
+
+    /**
+     * Update member role
+     */
+    async updateMemberRole(id: number, role: RoleDefault): Promise<FlowXResponse<ProjectMemberResponse>> {
+        const response = await apiService.instance.put<FlowXResponse<ProjectMemberResponse>>(
+            `/api/project-member/${id}/role`,
+            role
+        );
+        return response.data;
+    }
+
+    /**
+     * Update member status
+     */
+    async updateMemberStatus(id: number, status: MemberStatus): Promise<FlowXResponse<ProjectMemberResponse>> {
+        const response = await apiService.instance.put<FlowXResponse<ProjectMemberResponse>>(
+            `/api/project-member/${id}/status`,
+            null,
+            { params: { status } }
         );
         return response.data;
     }
@@ -57,49 +79,6 @@ class ProjectMemberService {
     async getMembersByProjectId(projectId: number): Promise<FlowXResponse<ProjectMemberResponse[]>> {
         const response = await apiService.instance.get<FlowXResponse<ProjectMemberResponse[]>>(
             `/api/project-member/get-by-project/${projectId}`
-        );
-        return response.data;
-    }
-
-    /**
-     * Get projects by user ID
-     */
-    async getProjectsByUserId(userId: number): Promise<FlowXResponse<ProjectMemberResponse[]>> {
-        const response = await apiService.instance.get<FlowXResponse<ProjectMemberResponse[]>>(
-            `/api/project-member/user/${userId}`
-        );
-        return response.data;
-    }
-
-    /**
-     * Update member role
-     */
-    async updateMemberRole(id: number, role: RoleDefault): Promise<FlowXResponse<ProjectMemberResponse>> {
-        const response = await apiService.instance.put<FlowXResponse<ProjectMemberResponse>>(
-            `/api/project-member/${id}/role`,
-            role
-        );
-        return response.data;
-    }
-
-    /**
-     * Update member status
-     */
-    async updateMemberStatus(id: number, status: MemberStatus): Promise<FlowXResponse<ProjectMemberResponse>> {
-        const response = await apiService.instance.put<FlowXResponse<ProjectMemberResponse>>(
-            `/api/project-member/${id}/status`,
-            null,
-            { params: { status } }
-        );
-        return response.data;
-    }
-
-    /**
-     * Get active members by project ID
-     */
-    async getActiveMembers(projectId: number): Promise<FlowXResponse<ProjectMemberResponse[]>> {
-        const response = await apiService.instance.get<FlowXResponse<ProjectMemberResponse[]>>(
-            `/api/project-member/project/${projectId}/active`
         );
         return response.data;
     }

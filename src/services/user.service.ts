@@ -81,7 +81,7 @@ class UserService {
      */
     async getAllUsers(): Promise<FlowXResponse<UserResponse[]>> {
         const response = await apiService.instance.get<FlowXResponse<UserResponse[]>>(
-            '/api/user/getall'
+            '/api/user/get-all'
         );
         return response.data;
     }
@@ -128,23 +128,12 @@ class UserService {
     }
 
     /**
-     * Update my avatar only (current authenticated user)
+     * Change password for current authenticated user
      */
-    async updateMyAvatar(avatar: string): Promise<FlowXResponse<UserResponse>> {
-        const response = await apiService.instance.put<FlowXResponse<UserResponse>>(
-            '/api/user/my-avatar',
-            avatar
-        );
-        return response.data;
-    }
-
-    /**
-     * Update my background only (current authenticated user)
-     */
-    async updateMyBackground(background: string): Promise<FlowXResponse<UserResponse>> {
-        const response = await apiService.instance.put<FlowXResponse<UserResponse>>(
-            '/api/user/my-background',
-            background
+    async changePassword(oldPassword: string, newPassword: string): Promise<FlowXResponse<string>> {
+        const response = await apiService.instance.put<FlowXResponse<string>>(
+            '/api/user/change-password',
+            { oldPassword, newPassword }
         );
         return response.data;
     }

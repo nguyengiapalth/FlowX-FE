@@ -33,6 +33,7 @@ export const useAutoRefresh = ({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const enabledRef = useRef(enabled);
   const onRefreshRef = useRef(onRefresh);
+  const refreshingRef = useRef(false);
 
   // Cập nhật refs để tránh stale closure
   useEffect(() => {
@@ -63,25 +64,23 @@ export const useAutoRefresh = ({
   const refresh = useCallback(async () => {
     if (!onRefreshRef.current) return;
 
-    // Tránh double refresh
-    setIsRefreshing(prevState => {
-      if (prevState) return prevState; // Đang refresh rồi, bỏ qua
-      
-      // Thực hiện refresh
-      (async () => {
-        try {
-          await onRefreshRef.current!();
-          setLastRefreshTime(new Date());
-        } catch (error) {
-          console.error('Auto refresh error:', error);
-          onErrorRef.current?.(error as Error);
-        } finally {
-          setIsRefreshing(false);
-        }
-      })();
-      
-      return true; // Set isRefreshing = true
-    });
+    // Tránh double refresh bằng ref để kiểm tra trạng thái hiện tại
+    if (refreshingRef.current) return; // Đang refresh rồi, bỏ qua
+    
+    refreshingRef.current = true;
+    setIsRefreshing(true);
+
+    // Thực hiện refresh bất đồng bộ
+    try {
+      await onRefreshRef.current!();
+      setLastRefreshTime(new Date());
+    } catch (error) {
+      console.error('Auto refresh error:', error);
+      onErrorRef.current?.(error as Error);
+    } finally {
+      refreshingRef.current = false;
+      setIsRefreshing(false);
+    }
   }, []); // Không có dependencies - hoàn toàn stable
 
   // Bắt đầu auto refresh
@@ -92,8 +91,8 @@ export const useAutoRefresh = ({
 
     setIsActive(true);
     
-    // Refresh ngay lập tức
-    refresh();
+    // Refresh ngay lập tức với delay để tránh setState during render
+    setTimeout(() => refresh(), 0);
 
     // Thiết lập interval
     intervalRef.current = setInterval(() => {
@@ -142,8 +141,8 @@ export const useAutoRefresh = ({
 
     setIsActive(true);
     
-    // Refresh ngay lập tức
-    refresh();
+    // Refresh ngay lập tức với delay để tránh setState during render
+    setTimeout(() => refresh(), 0);
 
     // Thiết lập interval
     intervalRef.current = setInterval(() => {

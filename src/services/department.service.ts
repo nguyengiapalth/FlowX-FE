@@ -60,23 +60,12 @@ class DepartmentService {
     }
 
     /**
-     * Update department background
-     */
-    async updateDepartmentBackground(id: number, background: string): Promise<FlowXResponse<DepartmentResponse>> {
-        const response = await apiService.instance.put<FlowXResponse<DepartmentResponse>>(
-            `/api/department/update-background/${id}`,
-            background
-        );
-        return response.data;
-    }
-
-    /**
      * Update department manager
      */
-    async updateDepartmentManager(id: number, newManagerId: number): Promise<FlowXResponse<DepartmentResponse>> {
+    async updateDepartmentManager(id: number, managerId: number): Promise<FlowXResponse<DepartmentResponse>> {
         const response = await apiService.instance.put<FlowXResponse<DepartmentResponse>>(
             `/api/department/update-manager/${id}`,
-            newManagerId
+            managerId
         );
         return response.data;
     }

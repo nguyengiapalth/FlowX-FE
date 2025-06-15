@@ -40,7 +40,7 @@ const ProjectDetailPage: React.FC = () => {
   const { handleProfileClick, navigate } = useNavigationActions();
   const { user } = useProfileStore();
   const { isProjectManager } = useAuthStore();
-  const { createContent, syncContentFiles } = useContentStore();
+  const { createContent } = useContentStore();
   const { myProjects, fetchMyProjects } = useProjectStore();
   const [activeTab, setActiveTab] = useState<'members' | 'tasks' | 'discussion' | 'about'>('members');
 
@@ -173,9 +173,7 @@ const ProjectDetailPage: React.FC = () => {
       // If there are files, upload them
       if (files && files.length > 0 && createdContent.id) {
         await uploadContentFiles(createdContent.id, files);
-        
-        // Sync the content to update hasFile flag
-        await syncContentFiles(createdContent.id);
+        // hasFile flag will be synced automatically via events
       }
       
       setToast({ 
@@ -193,12 +191,10 @@ const ProjectDetailPage: React.FC = () => {
   };
 
   // Background handlers
-  const handleBackgroundUpdate = async (objectKey: string) => {
+  const handleBackgroundUpdate = async () => {
     if (!projectData) return;
     
-    await projectService.updateProjectBackground(projectData.id, objectKey);
-    
-    // Refresh project data
+    // Refresh project data - backend will auto-sync through events
     const updatedProject = await projectService.getProjectById(projectData.id);
     if (updatedProject.data) {
       setProjectData(updatedProject.data);

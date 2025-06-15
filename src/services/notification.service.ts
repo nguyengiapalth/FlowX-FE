@@ -1,22 +1,10 @@
 import { apiService } from './api.service';
 import type { FlowXResponse, Page } from '../types/common';
 import type { 
-    NotificationResponse, 
-    NotificationCreateRequest 
+    NotificationResponse
 } from '../types/notification';
 
 class NotificationService {
-    /**
-     * Create a new notification
-     */
-    async createNotification(request: NotificationCreateRequest): Promise<FlowXResponse<NotificationResponse>> {
-        const response = await apiService.instance.post<FlowXResponse<NotificationResponse>>(
-            '/api/notification/create',
-            request
-        );
-        return response.data;
-    }
-
     /**
      * Get my notifications with pagination
      */

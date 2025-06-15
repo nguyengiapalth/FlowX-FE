@@ -161,16 +161,6 @@ class TaskService {
         );
         return response.data;
     }
-
-    /**
-     * Sync task files - update hasFiles flag based on actual files
-     */
-    async syncTaskFiles(id: number): Promise<FlowXResponse<void>> {
-        const response = await apiService.instance.put<FlowXResponse<void>>(
-            `/api/task/${id}/sync-files`
-        );
-        return response.data;
-    }
 }
 
 export default new TaskService(); 

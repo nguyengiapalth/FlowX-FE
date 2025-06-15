@@ -30,9 +30,7 @@ const NewsfeedPage: React.FC = () => {
       // If there are files, upload them
       if (files && files.length > 0) {
         await uploadContentFiles(newContent.id, files);
-        
-        // Sync the content to update hasFile flag
-        // await syncContentFiles(newContent.id);
+        // hasFile flag will be synced automatically via events
       }
       
       setToast({ 

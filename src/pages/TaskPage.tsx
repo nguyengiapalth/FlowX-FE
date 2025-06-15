@@ -442,7 +442,7 @@ const TaskPage: React.FC = () => {
 
                       {/* Assignee */}
                       <div className="col-span-2">
-                        {task.assignee ? (
+                        {task.assignee && task.assignee.id ? (
                           <UserAvatarName 
                             user={task.assignee}
                             size="sm"

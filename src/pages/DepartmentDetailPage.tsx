@@ -34,7 +34,7 @@ const DepartmentDetailPage: React.FC = () => {
   const { navigate } = useNavigationActions();
   const { user } = useProfileStore();
   const { canAccessDepartment, isDepartmentManager, isGlobalManager } = useAuthStore();
-  const { createContent, syncContentFiles } = useContentStore();
+  const { createContent } = useContentStore();
   const [activeTab, setActiveTab] = useState<'members' | 'projects' | 'tasks' | 'discussion' | 'about'>('members');
 
   // States for real data
@@ -108,9 +108,7 @@ const DepartmentDetailPage: React.FC = () => {
       // If there are files, upload them
       if (files && files.length > 0 && createdContent.id) {
         await uploadContentFiles(createdContent.id, files);
-        
-        // Sync the content to update hasFile flag
-        await syncContentFiles(createdContent.id);
+        // hasFile flag will be synced automatically via events
       }
       
       setToast({ 
@@ -128,12 +126,10 @@ const DepartmentDetailPage: React.FC = () => {
   };
 
   // Background handlers
-  const handleBackgroundUpdate = async (objectKey: string) => {
+  const handleBackgroundUpdate = async () => {
     if (!departmentData) return;
     
-    await departmentService.updateDepartmentBackground(departmentData.id, objectKey);
-    
-    // Refresh department data
+    // Refresh department data - backend will auto-sync through events
     const updatedDept = await departmentService.getDepartmentById(departmentData.id);
     if (updatedDept.data) {
       setDepartmentData(updatedDept.data);

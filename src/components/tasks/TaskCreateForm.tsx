@@ -24,7 +24,7 @@ const TaskCreateForm: React.FC<TaskCreateFormProps> = ({
   targetId = 0,
   availableUsers
 }) => {
-  const { createTask, syncTaskFiles } = useTaskStore();
+  const { createTask } = useTaskStore();
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -79,15 +79,7 @@ const TaskCreateForm: React.FC<TaskCreateFormProps> = ({
       setLoading(true);
       const createdTask = await createTask(formData);
       
-      if (createdTask) {
-        // Auto-sync files for newly created task to ensure hasFiles flag is correct
-        try {
-          await syncTaskFiles(createdTask.id);
-        } catch (syncError) {
-          console.error('Failed to sync files for new task:', syncError);
-          // Continue even if sync fails
-        }
-        
+      if (createdTask) {        
         setToast({ message: 'Tạo task thành công!', type: 'success' });
         onTaskCreated?.(createdTask);
         setTimeout(() => {

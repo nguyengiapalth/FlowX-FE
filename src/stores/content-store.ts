@@ -36,7 +36,7 @@ interface ContentState {
     createContent: (request: ContentCreateRequest) => Promise<ContentResponse>;
     updateContent: (id: number, request: ContentUpdateRequest) => Promise<ContentResponse>;
     deleteContent: (id: number) => Promise<void>;
-    syncContentFiles: (id: number) => Promise<void>;
+
     
     // Reaction operations
     fetchReactionSummary: (contentId: number) => Promise<void>;
@@ -317,24 +317,7 @@ export const useContentStore = create<ContentState>()(
                 }
             },
 
-            syncContentFiles: async (id: number) => {
-                const { accessToken } = useAuthStore.getState();
-                if (!accessToken) {
-                    set({ error: 'No access token' });
-                    throw new Error('No access token');
-                }
 
-                try {
-                    const response = await contentService.syncContentFiles(id);
-                    
-                    if (response.code === 200 && response.data) {
-                        get().updateContentInList(response.data);
-                    }
-                } catch (error: any) {
-                    console.warn('Failed to sync content files:', error);
-                    // Don't throw error for sync operation
-                }
-            },
 
             // Utility
             addContent: (content) => {

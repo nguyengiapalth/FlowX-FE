@@ -41,21 +41,13 @@ export interface UserCreateRequest {
 }
 
 export interface UserUpdateRequest {
-    phoneNumber?: string;
-    address?: string;
-    status?: UserStatus;
     fullName?: string;
-    dateOfBirth?: string; // ISO date string;
-    gender?: 'MALE' | 'FEMALE' | 'OTHER';
-    bio?: string;
-    facebook?: string;
-    linkedin?: string;
-    twitter?: string;
-}
-
-export interface UserAvatarUpdateRequest {
-    avatar?: string;
-    background?: string;
+    email?: string;
+    position?: string;
+    phone?: string;
+    dateOfBirth?: string;
+    address?: string;
+    departmentId?: number;
 }
 
 export interface UserActivityLogResponse {

@@ -2,8 +2,12 @@ import React, { useState, useEffect } from 'react';
 import departmentService from '../../services/department.service';
 import userService from '../../services/user.service';
 import { ImageCropper } from './ImageCropper';
+import { useContentStore } from '../../stores/content-store';
+import fileService from '../../services/file.service';
 import type { DepartmentResponse, DepartmentUpdateRequest } from '../../types/department';
 import type { UserResponse } from '../../types/user';
+import type { ContentCreateRequest } from '../../types/content';
+import type { FileCreateRequest } from '../../types/file';
 
 interface DepartmentManageModalProps {
   department: DepartmentResponse;
@@ -24,6 +28,7 @@ const DepartmentManageModal: React.FC<DepartmentManageModalProps> = ({
   onError,
   onDepartmentUpdated
 }) => {
+  const { createContent } = useContentStore();
   const [activeModal, setActiveModal] = useState<ModalType>('info');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,6 +48,45 @@ const DepartmentManageModal: React.FC<DepartmentManageModalProps> = ({
   const [cropperImageFile, setCropperImageFile] = useState<File | null>(null);
   const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
   const [backgroundPreview, setBackgroundPreview] = useState<string>('');
+
+  // Upload helper method
+  const uploadContentFiles = async (contentId: number, files: File[]) => {
+    const uploadPromises = files.map(async (file) => {
+      try {
+        const fileRequest: FileCreateRequest = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          targetId: contentId,
+          fileTargetType: 'CONTENT'
+        };
+
+        const presignedResponse = await fileService.getPresignedUploadUrl(fileRequest);
+        if (!presignedResponse.data) {
+          throw new Error('No presigned URL returned from server');
+        }
+
+        const response = await fetch(presignedResponse.data.url, {
+          method: 'PUT',
+          body: file,
+          headers: {
+            'Content-Type': file.type,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+        }
+
+        return presignedResponse.data;
+      } catch (error) {
+        console.error(`Failed to upload file ${file.name}:`, error);
+        throw error;
+      }
+    });
+
+    return Promise.all(uploadPromises);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -137,36 +181,34 @@ const DepartmentManageModal: React.FC<DepartmentManageModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      // First upload the file to get object key
-      const formData = new FormData();
-      formData.append('file', backgroundFile);
+      // Step 1: Create content with special subtitle that triggers background update event
+      const postRequest: ContentCreateRequest = {
+        subtitle: `đã thay đổi ảnh bìa của ${department.name}`,
+        body: '', // No description needed
+        contentTargetType: 'DEPARTMENT',
+        targetId: department.id,
+        parentId: -1
+      };
 
-      // Use a simple file upload endpoint to get object key
-      const uploadResponse = await fetch('/api/file/upload', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+      let createdContent = await createContent(postRequest);
+
+      // Step 2: Upload file - this will trigger the background update event automatically
+      if (createdContent.id) {
+        await uploadContentFiles(createdContent.id, [backgroundFile]);
+        // Backend will automatically sync background through BackgroundUpdatedEvent
+      }
+
+      // Step 3: Wait a moment for backend processing then refresh
+      setTimeout(async () => {
+        // Refresh department data by calling callback
+        const refreshedResponse = await departmentService.getDepartmentById(department.id);
+        if (refreshedResponse.code === 200 && refreshedResponse.data) {
+          onDepartmentUpdated(refreshedResponse.data);
         }
-      });
+      }, 200);
 
-      if (!uploadResponse.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const uploadResult = await uploadResponse.json();
-      const objectKey = uploadResult.data.objectKey;
-
-      // Update department background with object key
-      const response = await departmentService.updateDepartmentBackground(department.id, objectKey);
-
-      if (response.code === 200 && response.data) {
-        onDepartmentUpdated(response.data);
-        onSuccess('Cập nhật ảnh nền phòng ban thành công!');
-        onClose();
-      } else {
-        onError(response.message || 'Có lỗi xảy ra khi cập nhật ảnh nền');
-      }
+      onSuccess('Cập nhật ảnh nền phòng ban thành công!');
+      onClose();
     } catch (error: any) {
       console.error('Failed to update department background:', error);
       onError('Không thể cập nhật ảnh nền phòng ban');

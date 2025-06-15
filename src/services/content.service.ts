@@ -63,7 +63,6 @@ class ContentService {
     /**
      * Get global contents
      */
-
     async getGlobalContents(): Promise<FlowXResponse<ContentResponse[]>> {
         const contentTargetType = 'GLOBAL';
         const targetId = 0;
@@ -102,16 +101,6 @@ class ContentService {
     async getContentsByUser(userId: number): Promise<FlowXResponse<ContentResponse[]>> {
         const response = await apiService.instance.get<FlowXResponse<ContentResponse[]>>(
             `/api/content/user/${userId}`
-        );
-        return response.data;
-    }
-
-    /**
-     * Sync content files - update hasFile flag based on actual files
-     */
-    async syncContentFiles(id: number): Promise<FlowXResponse<ContentResponse>> {
-        const response = await apiService.instance.put<FlowXResponse<ContentResponse>>(
-            `/api/content/${id}/sync-files`
         );
         return response.data;
     }
